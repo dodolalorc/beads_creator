@@ -1,0 +1,92 @@
+[
+    {
+        "id": "snow-white",
+        "name": "Snow White",
+        "hex": "#ffffff"
+    },
+    {
+        "id": "licorice-black",
+        "name": "Licorice Black",
+        "hex": "#1d1d1f"
+    },
+    {
+        "id": "cherry-red",
+        "name": "Cherry Red",
+        "hex": "#d7263d"
+    },
+    {
+        "id": "tangerine",
+        "name": "Tangerine",
+        "hex": "#f76b1c"
+    },
+    {
+        "id": "sunshine",
+        "name": "Sunshine",
+        "hex": "#ffc857"
+    },
+    {
+        "id": "lime",
+        "name": "Lime",
+        "hex": "#9acd32"
+    },
+    {
+        "id": "forest",
+        "name": "Forest",
+        "hex": "#2b9348"
+    },
+    {
+        "id": "sky",
+        "name": "Sky",
+        "hex": "#4ea8de"
+    },
+    {
+        "id": "cerulean",
+        "name": "Cerulean",
+        "hex": "#1d4ed8"
+    },
+    {
+        "id": "violet",
+        "name": "Violet",
+        "hex": "#6a4c93"
+    },
+    {
+        "id": "blush",
+        "name": "Blush",
+        "hex": "#f4a3b4"
+    },
+    {
+        "id": "sand",
+        "name": "Sand",
+        "hex": "#e0c097"
+    },
+    {
+        "id": "coffee",
+        "name": "Coffee",
+        "hex": "#8b5e3c"
+    },
+    {
+        "id": "slate",
+        "name": "Slate",
+        "hex": "#6b7280"
+    },
+    {
+        "id": "silver",
+        "name": "Silver",
+        "hex": "#d1d5db"
+    },
+    {
+        "id": "mint",
+        "name": "Mint",
+        "hex": "#89f0d1"
+    },
+    {
+        "id": "peach",
+        "name": "Peach",
+        "hex": "#ffb5a7"
+    },
+    {
+        "id": "gold",
+        "name": "Gold",
+        "hex": "#f2b900"
+    }
+]
