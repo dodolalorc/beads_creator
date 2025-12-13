@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import PaletteSelector from "./components/PaletteSelector.vue";
+import CanvasViewer from "./components/CanvasViewer.vue";
+import NewImportControls from "./components/NewImportControls.vue";
+import CanvasSizeControls from "./components/CanvasSizeControls.vue";
+import BatchReplaceControls from "./components/BatchReplaceControls.vue";
+import ExportTools from "./components/ExportTools.vue";
 
 type PaletteColor = {
   id: string;
@@ -7,14 +13,37 @@ type PaletteColor = {
   hex: string;
 };
 
-const palette = ref<PaletteColor[]>([]);
+type PaletteColorMap = {
+  'A': PaletteColor[];
+  'B': PaletteColor[];
+  'C': PaletteColor[];
+  'D': PaletteColor[];
+  'E': PaletteColor[];
+  'F': PaletteColor[];
+  'G': PaletteColor[];
+  'H': PaletteColor[];
+  'M': PaletteColor[];
+};
+
+const palette = ref<PaletteColorMap>({
+  'A': [],
+  'B': [],
+  'C': [],
+  'D': [],
+  'E': [],
+  'F': [],
+  'G': [],
+  'H': [],
+  'M': []
+});
+
 const paletteError = ref("");
 const paletteLoading = ref(false);
 const selectedColorIds = ref<string[]>([]);
 const activeColorId = ref<string | null>(null);
 
-const canvasWidth = ref(16);
-const canvasHeight = ref(16);
+const canvasWidth = ref(30);
+const canvasHeight = ref(30);
 const pixels = ref<string[][]>([]);
 const sourceImageName = ref<string>("");
 const replaceFrom = ref<string | null>(null);
@@ -22,29 +51,13 @@ const replaceTo = ref<string | null>(null);
 const statusMessage = ref<string>("准备好生成像素画");
 
 const selectedColors = computed(() =>
-  palette.value.filter((c) => selectedColorIds.value.includes(c.id))
+  Object.values(palette.value).flat().filter((c) => selectedColorIds.value.includes(c.id))
 );
 
 const paletteMap = computed(() => {
   const map = new Map<string, PaletteColor>();
-  palette.value.forEach((c) => map.set(c.id, c));
+  Object.values(palette.value).flat().forEach((c) => map.set(c.id, c));
   return map;
-});
-
-const colorUsage = computed(() => {
-  const counts = new Map<string, number>();
-  pixels.value.forEach((row) => {
-    row.forEach((cell) => {
-      if (!cell) return;
-      counts.set(cell, (counts.get(cell) ?? 0) + 1);
-    });
-  });
-  const summary = [...counts.entries()].map(([id, count]) => ({
-    id,
-    count,
-    color: paletteMap.value.get(id),
-  }));
-  return summary.sort((a, b) => b.count - a.count);
 });
 
 onMounted(async () => {
@@ -52,10 +65,10 @@ onMounted(async () => {
     paletteLoading.value = true;
     const res = await fetch("/palette.json");
     if (!res.ok) throw new Error("无法加载色板数据");
-    const data: PaletteColor[] = await res.json();
+    const data: PaletteColorMap = await res.json();
     palette.value = data;
-    selectedColorIds.value = data.map((c) => c.id);
-    activeColorId.value = data[0]?.id ?? null;
+    selectedColorIds.value = Object.values(data).flat().map((c) => c.id);
+    activeColorId.value = Object.values(data).flat()[0]?.id ?? null;
     initBlankCanvas();
   } catch (err) {
     paletteError.value = err instanceof Error ? err.message : "加载色板失败";
@@ -65,7 +78,7 @@ onMounted(async () => {
 });
 
 function initBlankCanvas() {
-  const fallbackColor = selectedColorIds.value[0] ?? palette.value[0]?.id ?? "";
+  const fallbackColor = selectedColorIds.value[0] ?? Object.values(palette.value).flat()[0]?.id ?? "";
   const rows: string[][] = [];
   for (let y = 0; y < canvasHeight.value; y += 1) {
     const row: string[] = [];
@@ -76,35 +89,6 @@ function initBlankCanvas() {
   }
   pixels.value = rows;
   statusMessage.value = `创建了 ${canvasWidth.value} x ${canvasHeight.value} 的空白画布`;
-}
-
-function setActive(colorId: string) {
-  activeColorId.value = colorId;
-}
-
-function toggleSelection(id: string) {
-  if (selectedColorIds.value.includes(id)) {
-    selectedColorIds.value = selectedColorIds.value.filter((v) => v !== id);
-  } else {
-    selectedColorIds.value = [...selectedColorIds.value, id];
-  }
-  if (!selectedColorIds.value.length) {
-    activeColorId.value = null;
-  } else if (activeColorId.value === null) {
-    activeColorId.value = selectedColorIds.value[0];
-  }
-}
-
-function handleCanvasSizeChange() {
-  initBlankCanvas();
-}
-
-function handlePixelClick(rowIndex: number, colIndex: number) {
-  if (!activeColorId.value) return;
-  const next = pixels.value.map((row, r) =>
-    row.map((cell, c) => (r === rowIndex && c === colIndex ? activeColorId.value! : cell))
-  );
-  pixels.value = next;
 }
 
 function hexToRgb(hex: string) {
@@ -126,7 +110,7 @@ function colorDistance(a: PaletteColor, r: number, g: number, b: number) {
 }
 
 function findNearestColor(r: number, g: number, b: number): string {
-  const candidates = selectedColors.value.length ? selectedColors.value : palette.value;
+  const candidates = selectedColors.value.length ? selectedColors.value : Object.values(palette.value).flat();
   if (!candidates.length) return "";
   let bestId = candidates[0].id;
   let bestScore = Number.POSITIVE_INFINITY;
@@ -188,6 +172,7 @@ function replaceColorBatch() {
   pixels.value = next;
 }
 
+// 导出函数
 function downloadCsv() {
   if (!pixels.value.length) return;
   const rows = pixels.value.map((row) =>
@@ -217,8 +202,20 @@ function contrastColor(hex: string) {
 
 function downloadPng() {
   if (!pixels.value.length) return;
+
+  const colorUsage = new Map<string, number>();
+  pixels.value.forEach((row) => {
+    row.forEach((cell) => {
+      if (!cell) return;
+      colorUsage.set(cell, (colorUsage.get(cell) ?? 0) + 1);
+    });
+  });
+  const usageSummary = [...colorUsage.entries()]
+    .map(([id, count]) => ({ id, count, color: paletteMap.value.get(id) }))
+    .sort((a, b) => b.count - a.count);
+
   const cell = Math.max(16, Math.min(48, Math.floor(1200 / Math.max(canvasWidth.value, canvasHeight.value))));
-  const legendLines = colorUsage.value.length + 1;
+  const legendLines = usageSummary.length + 1;
   const legendHeight = legendLines * 26 + 24;
   const canvas = document.createElement("canvas");
   canvas.width = canvasWidth.value * cell;
@@ -252,11 +249,11 @@ function downloadPng() {
   ctx.font = "16px 'Space Grotesk', 'Segoe UI', sans-serif";
   ctx.textBaseline = "top";
   ctx.fillText(
-    `总共 ${colorUsage.value.length} 种颜色，像素 ${canvasWidth.value}x${canvasHeight.value}`,
+    `总共 ${usageSummary.length} 种颜色，像素 ${canvasWidth.value}x${canvasHeight.value}`,
     12,
     canvasHeight.value * cell + 8
   );
-  colorUsage.value.forEach((entry, idx) => {
+  usageSummary.forEach((entry, idx) => {
     if (!entry.color) return;
     ctx.fillStyle = entry.color.hex;
     const y = canvasHeight.value * cell + 32 + idx * 26;
@@ -278,6 +275,7 @@ function downloadPng() {
 
 <template>
   <div class="page">
+    <!-- 顶部标题区 -->
     <header class="hero">
       <div>
         <p class="eyebrow">像素画工作台</p>
@@ -285,151 +283,72 @@ function downloadPng() {
         <p class="lede">
           选择固定色彩、设定画布尺寸，上传图片后自动量化；支持手工修正、换色、CSV 导出，以及带色号标注的 PNG。
         </p>
-        <div class="hero-actions">
-          <button class="primary" @click="initBlankCanvas">新建空白画布</button>
-          <label class="ghost file">上传图片
-            <input type="file" accept="image/*" @change="handleImageUpload" />
-          </label>
-        </div>
-        <p class="status">{{ statusMessage }}</p>
-        <p v-if="paletteError" class="error">{{ paletteError }}</p>
       </div>
     </header>
 
-    <section class="controls">
-      <div class="panel">
-        <div class="panel-title">色板选择</div>
-        <p class="note">从静态 JSON 读取的预设色板，默认全选，可点击色块设为当前画笔。</p>
-        <div class="palette-actions">
-          <button class="ghost" @click="selectedColorIds = palette.map((c) => c.id)">全选</button>
-          <button class="ghost" @click="selectedColorIds = []">清空</button>
-        </div>
-        <div class="palette-grid">
-          <label
-            v-for="color in palette"
-            :key="color.id"
-            class="swatch"
-            :style="{ background: color.hex, borderColor: activeColorId === color.id ? '#0ea5e9' : 'transparent' }"
-          >
-            <input
-              type="checkbox"
-              :checked="selectedColorIds.includes(color.id)"
-              @change="toggleSelection(color.id)"
-            />
-            <button type="button" class="swatch-btn" @click="setActive(color.id)"></button>
-            <span class="swatch-label">{{ color.name }}</span>
-          </label>
-        </div>
+    <!-- 色板选择 - 独占一行 -->
+    <PaletteSelector :palette="palette" :selected-color-ids="selectedColorIds" :active-color-id="activeColorId"
+      @update="(ids) => selectedColorIds = ids" @set-active="(id) => activeColorId = id" />
+
+    <!-- 画布与控制区 - 左右布局 -->
+    <div class="canvas-workspace">
+      <!-- 左侧控制区 -->
+      <aside class="left-controls">
+        <NewImportControls :status-message="statusMessage" :palette-error="paletteError" @init-blank="initBlankCanvas"
+          @upload-image="handleImageUpload" />
+        <CanvasSizeControls :width="canvasWidth" :height="canvasHeight" @update:width="(v) => (canvasWidth = v)"
+          @update:height="(v) => (canvasHeight = v)" @apply="initBlankCanvas" />
+      </aside>
+
+      <!-- 中间画布区 -->
+      <div class="canvas-container">
+        <CanvasViewer :canvas-width="canvasWidth" :canvas-height="canvasHeight" :pixels="pixels"
+          :palette-map="paletteMap" :active-color-id="activeColorId" @pixel-click="(r, c) => {
+            if (!activeColorId) return;
+            const next = pixels.map((row, ri) =>
+              row.map((cell, ci) => (ri === r && ci === c ? activeColorId! : cell))
+            );
+            pixels = next;
+          }" />
       </div>
 
-      <div class="panel">
-        <div class="panel-title">画布与图片</div>
-        <div class="form-row">
-          <label>宽度
-            <input type="number" min="1" max="200" v-model.number="canvasWidth" @change="handleCanvasSizeChange" />
-          </label>
-          <label>高度
-            <input type="number" min="1" max="200" v-model.number="canvasHeight" @change="handleCanvasSizeChange" />
-          </label>
-        </div>
-        <div class="form-row">
-          <label class="ghost file full">重新上传图片
-            <input type="file" accept="image/*" @change="handleImageUpload" />
-          </label>
-        </div>
-        <p class="note">上传后按设定尺寸缩放，再按选中颜色量化。</p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">编辑与换色</div>
-        <p class="note">左侧色块可设为画笔，点击画布像素即可上色。下方可批量替换。</p>
-        <div class="form-row">
-          <label>当前画笔
-            <div class="chip" :style="{ background: paletteMap.get(activeColorId || '')?.hex || '#0f172a' }">
-              {{ paletteMap.get(activeColorId || '')?.name || '未选择' }}
-            </div>
-          </label>
-        </div>
-        <div class="form-row">
-          <label>从
-            <select v-model="replaceFrom">
-              <option :value="null">请选择</option>
-              <option v-for="c in palette" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-          </label>
-          <label>替换为
-            <select v-model="replaceTo">
-              <option :value="null">请选择</option>
-              <option v-for="c in palette" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-          </label>
-          <button class="primary" @click="replaceColorBatch">执行替换</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">导出</div>
-        <p class="note">CSV 将按当前像素网格导出色名与色号；PNG 会在每格标注色号并在底部汇总颜色用量。</p>
-        <div class="export-actions">
-          <button class="primary" @click="downloadCsv">导出 CSV</button>
-          <button class="ghost" @click="downloadPng">导出 PNG</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="canvas-section">
-      <div class="canvas-header">
-        <div>
-          <p class="eyebrow">画布</p>
-          <h2>{{ canvasWidth }} × {{ canvasHeight }} 像素</h2>
-          <p class="note">点击单格编辑；上方色板选择画笔色。</p>
-        </div>
-        <div class="usage">
-          <div class="chip" v-for="entry in colorUsage" :key="entry.id">
-            <span class="dot" :style="{ background: entry.color?.hex }"></span>
-            {{ entry.color?.name }} × {{ entry.count }}
-          </div>
-        </div>
-      </div>
-      <div
-        class="pixel-grid"
-        :style="{ gridTemplateColumns: `repeat(${canvasWidth}, minmax(10px, 1fr))` }"
-      >
-        <template v-for="(row, r) in pixels" :key="`row-${r}`">
-          <button
-            v-for="(cell, c) in row"
-            :key="`cell-${r}-${c}`"
-            class="pixel"
-            :style="{ background: paletteMap.get(cell)?.hex || '#111827' }"
-            @click="handlePixelClick(r, c)"
-          ></button>
-        </template>
-      </div>
-    </section>
+      <!-- 右侧控制区 -->
+      <aside class="right-controls">
+        <BatchReplaceControls :palette="palette" :replace-from="replaceFrom" :replace-to="replaceTo"
+          @update:replaceFrom="(v) => (replaceFrom = v)" @update:replaceTo="(v) => (replaceTo = v)"
+          @submit="replaceColorBatch" />
+        <ExportTools @csv="downloadCsv" @png="downloadPng" />
+      </aside>
+    </div>
   </div>
 </template>
 
-<style scoped>
+<style>
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
 
-:global(:root) {
+:root {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   background: radial-gradient(circle at 10% 20%, #0ea5e9 0, transparent 18%),
     radial-gradient(circle at 90% 10%, #22d3ee 0, transparent 20%),
     #0b1021;
   color: #e5e7eb;
+  box-sizing: border-box;
 }
 
 .page {
-  max-width: 1200px;
+  width: 100%;
+  width: fit-content;
   margin: 0 auto;
   padding: 32px 20px 64px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 24px;
 }
 
+/* 顶部标题区 */
 .hero {
+  width: 100%;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
@@ -448,28 +367,40 @@ function downloadPng() {
 h1 {
   margin: 0 0 8px;
   font-size: 28px;
+  color: #e2e8f0;
 }
 
 .lede {
-  margin: 0 0 16px;
+  margin: 0;
   color: #cbd5e1;
-  max-width: 760px;
+  max-width: 100%;
+  line-height: 1.6;
 }
 
-.hero-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.controls {
+/* 画布工作区 - 左中右布局 */
+.canvas-workspace {
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 20px;
+  align-items: start;
 }
 
-.panel {
+.left-controls,
+.right-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 20px;
+}
+
+.canvas-container {
+  display: block;
+  min-height: 400px;
+}
+
+.control-group {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
@@ -479,62 +410,24 @@ h1 {
   gap: 12px;
 }
 
-.panel-title {
+.section-title {
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.note {
-  margin: 0;
-  color: #94a3b8;
   font-size: 14px;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.palette-actions {
+.button-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.palette-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-}
-
-.swatch {
-  position: relative;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  padding: 8px;
+.button-col {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #0b1021;
-  font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-
-.swatch input {
-  width: 16px;
-  height: 16px;
-}
-
-.swatch-btn {
-  flex: 1;
-  height: 32px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.swatch-label {
-  background: rgba(0, 0, 0, 0.35);
-  color: #f8fafc;
-  padding: 3px 6px;
-  border-radius: 6px;
-  font-size: 12px;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .form-row {
@@ -543,29 +436,60 @@ h1 {
   flex-wrap: wrap;
 }
 
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 label {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
-input,
+.form-row label {
+  min-width: 120px;
+}
+
+input[type="number"],
 select {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 10px;
   color: #e2e8f0;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 button {
   cursor: pointer;
   border-radius: 10px;
   border: 1px solid transparent;
-  padding: 10px 14px;
+  padding: 10px 16px;
   font-weight: 700;
-  color: #0b1021;
+  font-size: 14px;
+  transition: all 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .primary {
@@ -574,116 +498,143 @@ button {
   border: none;
 }
 
+.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .ghost {
   background: rgba(255, 255, 255, 0.06);
   color: #e2e8f0;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.file {
+.ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 上传按钮样式 */
+.upload-btn {
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
   position: relative;
   overflow: hidden;
 }
 
-.file input {
+.upload-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.upload-btn input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
-}
-
-.file.full {
   width: 100%;
+  height: 100%;
 }
 
-.chip {
+.chip-display {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
+  padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
+  font-weight: 600;
+  font-size: 14px;
+  justify-content: center;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.export-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.note {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .status {
   color: #67e8f9;
-  margin: 8px 0 0;
+  margin: 0;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: rgba(103, 232, 249, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #67e8f9;
 }
 
 .error {
   color: #fca5a5;
+  margin: 0;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: rgba(252, 165, 165, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #fca5a5;
 }
 
-.canvas-section {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.canvas-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.usage {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.pixel-grid {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  background: #0b1021;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.pixel {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border: 1px solid rgba(0, 0, 0, 0.35);
-  border-radius: 4px;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
-
-.pixel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 720px) {
-  .canvas-header {
-    flex-direction: column;
-    align-items: flex-start;
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .canvas-workspace {
+    grid-template-columns: 240px 1fr 240px;
+    gap: 16px;
   }
-  .controls {
+}
+
+@media (max-width: 1024px) {
+  .canvas-workspace {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .left-controls,
+  .right-controls {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .left-controls,
+  .right-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .control-group {
+    padding: 14px;
+  }
+
+  .section-title {
+    font-size: 13px;
+  }
+
+  .button-col button,
+  .button-col label {
+    font-size: 13px;
+    padding: 9px 14px;
   }
 }
 </style>
