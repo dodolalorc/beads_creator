@@ -74,10 +74,11 @@ function downloadPng() {
   const gridWidth = props.canvasWidth * cell;
   const gridHeight = props.canvasHeight * cell;
 
-  // 底部色号图例布局：多列自适应
-  const legendItemWidth = 200;
-  const legendItemHeight = 44;
-  const legendCols = Math.max(1, Math.floor(gridWidth / legendItemWidth));
+  // 底部色号图例布局：每行固定 12 个
+  const legendCols = 12;
+  const legendItemGap = 8;
+  const legendItemHeight = 56;
+  const legendItemWidth = Math.floor((gridWidth - (legendCols - 1) * legendItemGap) / legendCols);
   const legendRows = Math.ceil(colorUsage.value.length / legendCols);
   const legendHeight = legendRows * legendItemHeight + 12;
 
@@ -114,7 +115,7 @@ function downloadPng() {
       ctx.strokeRect(gridX + x * cell, gridY + y * cell, cell, cell);
       if (color) {
         ctx.fillStyle = contrastColor(color.hex);
-        ctx.font = `${Math.max(10, Math.floor(cell * 0.32))}px 'Space Grotesk', 'Segoe UI', sans-serif`;
+        ctx.font = `${Math.max(10, Math.floor(cell * 0.32))}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(color.name, gridX + x * cell + cell / 2, gridY + y * cell + cell / 2);
@@ -127,28 +128,51 @@ function downloadPng() {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(gridX, legendTop, gridWidth, legendHeight);
 
-  // 绘制图例：数量在上，名称在下，多列排布
+  // 绘制图例：每项为无边框、圆角的色块背景卡片，文字（数量在上、名称在下）居左排布
   colorUsage.value.forEach((entry, idx) => {
     if (!entry.color) return;
     const col = idx % legendCols;
     const row = Math.floor(idx / legendCols);
-    const itemX = gridX + col * (gridWidth / legendCols);
+    const itemX = gridX + col * (legendItemWidth + legendItemGap);
     const itemY = legendTop + row * legendItemHeight;
 
+    // 卡片背景（使用色号为底色，圆角，无边框）
+    const radius = 10;
+    const w = legendItemWidth;
+    const h = legendItemHeight - 12; // 顶部整体留白已含 12px
     ctx.fillStyle = entry.color.hex;
-    ctx.fillRect(itemX + 6, itemY + 10, 24, 24);
-    ctx.strokeStyle = "#0f172a";
-    ctx.strokeRect(itemX + 6, itemY + 10, 24, 24);
+    // 绘制圆角矩形路径
+    ctx.beginPath();
+    ctx.moveTo(itemX, itemY);
+    ctx.moveTo(itemX + radius, itemY);
+    ctx.lineTo(itemX + w - radius, itemY);
+    ctx.quadraticCurveTo(itemX + w, itemY, itemX + w, itemY + radius);
+    ctx.lineTo(itemX + w, itemY + h - radius);
+    ctx.quadraticCurveTo(itemX + w, itemY + h, itemX + w - radius, itemY + h);
+    ctx.lineTo(itemX + radius, itemY + h);
+    ctx.quadraticCurveTo(itemX, itemY + h, itemX, itemY + h - radius);
+    ctx.lineTo(itemX, itemY + radius);
+    ctx.quadraticCurveTo(itemX, itemY, itemX + radius, itemY);
+    ctx.closePath();
+    ctx.fill();
 
-    ctx.fillStyle = "#0f172a";
+    // 文字颜色与居中排版
+    const textColor = contrastColor(entry.color.hex);
+    ctx.fillStyle = textColor;
+    ctx.textAlign = "center";
+
+    const centerX = itemX + w / 2;
+    const centerY = itemY + h / 2;
+
+    // 数量（上，居中）
     ctx.font = "14px 'Space Grotesk', 'Segoe UI', sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText(`${entry.count}`, itemX + 40, itemY + 8);
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(`${entry.count}`, centerX, centerY - 6);
 
+    // 名称（下，居中）
     ctx.font = "13px 'Space Grotesk', 'Segoe UI', sans-serif";
-    ctx.textBaseline = "bottom";
-    ctx.fillText(entry.color.name, itemX + 40, itemY + legendItemHeight - 6);
+    ctx.textBaseline = "top";
+    ctx.fillText(entry.color.name, centerX, centerY + 6);
   });
 
   const url = canvas.toDataURL("image/png");
