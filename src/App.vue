@@ -5,7 +5,7 @@ import CanvasViewer from "./components/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
 import CanvasSizeControls from "./components/CanvasSizeControls.vue";
 import BatchReplaceControls from "./components/BatchReplaceControls.vue";
-import ExportTools from "./components/ExportTools.vue";
+import ExportPanel from "./components/ExportPanel.vue";
 
 type PaletteColor = {
   id: string;
@@ -172,105 +172,7 @@ function replaceColorBatch() {
   pixels.value = next;
 }
 
-// 导出函数
-function downloadCsv() {
-  if (!pixels.value.length) return;
-  const rows = pixels.value.map((row) =>
-    row
-      .map((cell) => {
-        const color = paletteMap.value.get(cell);
-        if (!color) return "";
-        return `${color.name} (${color.hex})`;
-      })
-      .join(",")
-  );
-  const csv = rows.join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `pixel-art-${canvasWidth.value}x${canvasHeight.value}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function contrastColor(hex: string) {
-  const { r, g, b } = hexToRgb(hex);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? "#0f172a" : "#f8fafc";
-}
-
-function downloadPng() {
-  if (!pixels.value.length) return;
-
-  const colorUsage = new Map<string, number>();
-  pixels.value.forEach((row) => {
-    row.forEach((cell) => {
-      if (!cell) return;
-      colorUsage.set(cell, (colorUsage.get(cell) ?? 0) + 1);
-    });
-  });
-  const usageSummary = [...colorUsage.entries()]
-    .map(([id, count]) => ({ id, count, color: paletteMap.value.get(id) }))
-    .sort((a, b) => b.count - a.count);
-
-  const cell = Math.max(16, Math.min(48, Math.floor(1200 / Math.max(canvasWidth.value, canvasHeight.value))));
-  const legendLines = usageSummary.length + 1;
-  const legendHeight = legendLines * 26 + 24;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvasWidth.value * cell;
-  canvas.height = canvasHeight.value * cell + legendHeight;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  ctx.fillStyle = "#0b1021";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let y = 0; y < canvasHeight.value; y += 1) {
-    for (let x = 0; x < canvasWidth.value; x += 1) {
-      const color = paletteMap.value.get(pixels.value[y][x]);
-      ctx.fillStyle = color?.hex ?? "#1f2937";
-      ctx.fillRect(x * cell, y * cell, cell, cell);
-      ctx.strokeStyle = "rgba(15,23,42,0.4)";
-      ctx.strokeRect(x * cell, y * cell, cell, cell);
-      if (color) {
-        ctx.fillStyle = contrastColor(color.hex);
-        ctx.font = `${Math.max(10, Math.floor(cell * 0.32))}px 'Space Grotesk', 'Segoe UI', sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(color.hex, x * cell + cell / 2, y * cell + cell / 2);
-      }
-    }
-  }
-
-  ctx.fillStyle = "#0b1021";
-  ctx.fillRect(0, canvasHeight.value * cell, canvas.width, legendHeight);
-  ctx.fillStyle = "#e2e8f0";
-  ctx.font = "16px 'Space Grotesk', 'Segoe UI', sans-serif";
-  ctx.textBaseline = "top";
-  ctx.fillText(
-    `总共 ${usageSummary.length} 种颜色，像素 ${canvasWidth.value}x${canvasHeight.value}`,
-    12,
-    canvasHeight.value * cell + 8
-  );
-  usageSummary.forEach((entry, idx) => {
-    if (!entry.color) return;
-    ctx.fillStyle = entry.color.hex;
-    const y = canvasHeight.value * cell + 32 + idx * 26;
-    ctx.fillRect(12, y, 18, 18);
-    ctx.strokeStyle = "#0f172a";
-    ctx.strokeRect(12, y, 18, 18);
-    ctx.fillStyle = "#e2e8f0";
-    ctx.textAlign = "left";
-    ctx.fillText(`${entry.color.name} ${entry.color.hex} × ${entry.count}`, 40, y + 2);
-  });
-
-  const url = canvas.toDataURL("image/png");
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `pixel-art-${canvasWidth.value}x${canvasHeight.value}.png`;
-  link.click();
-}
+// 导出已移入 ExportPanel 组件
 </script>
 
 <template>
@@ -317,7 +219,8 @@ function downloadPng() {
         <BatchReplaceControls :palette="palette" :replace-from="replaceFrom" :replace-to="replaceTo"
           @update:replaceFrom="(v) => (replaceFrom = v)" @update:replaceTo="(v) => (replaceTo = v)"
           @submit="replaceColorBatch" />
-        <ExportTools @csv="downloadCsv" @png="downloadPng" />
+        <ExportPanel :canvas-width="canvasWidth" :canvas-height="canvasHeight" :pixels="pixels"
+          :palette-map="paletteMap" />
       </aside>
     </div>
   </div>

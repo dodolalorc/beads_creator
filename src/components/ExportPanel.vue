@@ -69,55 +69,86 @@ function downloadCsv() {
 
 function downloadPng() {
   if (!props.pixels.length) return;
+  const pad = 24; // 外层白色留白
   const cell = Math.max(16, Math.min(48, Math.floor(1200 / Math.max(props.canvasWidth, props.canvasHeight))));
-  const legendLines = colorUsage.value.length + 1;
-  const legendHeight = legendLines * 26 + 24;
+  const gridWidth = props.canvasWidth * cell;
+  const gridHeight = props.canvasHeight * cell;
+
+  // 底部色号图例布局：多列自适应
+  const legendItemWidth = 200;
+  const legendItemHeight = 44;
+  const legendCols = Math.max(1, Math.floor(gridWidth / legendItemWidth));
+  const legendRows = Math.ceil(colorUsage.value.length / legendCols);
+  const legendHeight = legendRows * legendItemHeight + 12;
+
   const canvas = document.createElement("canvas");
-  canvas.width = props.canvasWidth * cell;
-  canvas.height = props.canvasHeight * cell + legendHeight;
+  canvas.width = gridWidth + pad * 2;
+  canvas.height = pad + 32 + gridHeight + pad + legendHeight + pad;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  ctx.fillStyle = "#0b1021";
+  // 白色留白背景
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 顶部信息（尺寸、颜色数）
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "16px 'Space Grotesk', 'Segoe UI', sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`尺寸: ${props.canvasWidth} x ${props.canvasHeight}`, pad, pad);
+  ctx.fillText(`颜色数: ${colorUsage.value.length}`, pad, pad + 20);
+
+  // 绘制网格背景
+  const gridX = pad;
+  const gridY = pad + 32;
+  ctx.fillStyle = "#0b1021";
+  ctx.fillRect(gridX, gridY, gridWidth, gridHeight);
 
   for (let y = 0; y < props.canvasHeight; y += 1) {
     for (let x = 0; x < props.canvasWidth; x += 1) {
       const color = props.paletteMap.get(props.pixels[y][x]);
       ctx.fillStyle = color?.hex ?? "#1f2937";
-      ctx.fillRect(x * cell, y * cell, cell, cell);
+      ctx.fillRect(gridX + x * cell, gridY + y * cell, cell, cell);
       ctx.strokeStyle = "rgba(15,23,42,0.4)";
-      ctx.strokeRect(x * cell, y * cell, cell, cell);
+      ctx.strokeRect(gridX + x * cell, gridY + y * cell, cell, cell);
       if (color) {
         ctx.fillStyle = contrastColor(color.hex);
         ctx.font = `${Math.max(10, Math.floor(cell * 0.32))}px 'Space Grotesk', 'Segoe UI', sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(color.hex, x * cell + cell / 2, y * cell + cell / 2);
+        ctx.fillText(color.name, gridX + x * cell + cell / 2, gridY + y * cell + cell / 2);
       }
     }
   }
 
-  ctx.fillStyle = "#0b1021";
-  ctx.fillRect(0, props.canvasHeight * cell, canvas.width, legendHeight);
-  ctx.fillStyle = "#e2e8f0";
-  ctx.font = "16px 'Space Grotesk', 'Segoe UI', sans-serif";
-  ctx.textBaseline = "top";
-  ctx.fillText(
-    `总共 ${colorUsage.value.length} 种颜色，像素 ${props.canvasWidth}x${props.canvasHeight}`,
-    12,
-    props.canvasHeight * cell + 8
-  );
+  // 底部图例背景
+  const legendTop = gridY + gridHeight + pad;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(gridX, legendTop, gridWidth, legendHeight);
+
+  // 绘制图例：数量在上，名称在下，多列排布
   colorUsage.value.forEach((entry, idx) => {
     if (!entry.color) return;
+    const col = idx % legendCols;
+    const row = Math.floor(idx / legendCols);
+    const itemX = gridX + col * (gridWidth / legendCols);
+    const itemY = legendTop + row * legendItemHeight;
+
     ctx.fillStyle = entry.color.hex;
-    const y = props.canvasHeight * cell + 32 + idx * 26;
-    ctx.fillRect(12, y, 18, 18);
+    ctx.fillRect(itemX + 6, itemY + 10, 24, 24);
     ctx.strokeStyle = "#0f172a";
-    ctx.strokeRect(12, y, 18, 18);
-    ctx.fillStyle = "#e2e8f0";
+    ctx.strokeRect(itemX + 6, itemY + 10, 24, 24);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "14px 'Space Grotesk', 'Segoe UI', sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText(`${entry.color.name} ${entry.color.hex} × ${entry.count}`, 40, y + 2);
+    ctx.textBaseline = "top";
+    ctx.fillText(`${entry.count}`, itemX + 40, itemY + 8);
+
+    ctx.font = "13px 'Space Grotesk', 'Segoe UI', sans-serif";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(entry.color.name, itemX + 40, itemY + legendItemHeight - 6);
   });
 
   const url = canvas.toDataURL("image/png");
