@@ -205,14 +205,14 @@ function downloadPng() {
 
 <template>
   <div class="panel">
-    <div class="panel-title">导出</div>
+    <div class="panel-title">导出色号图纸</div>
     <p class="note">
       CSV 将按当前像素网格导出色名与色号；PNG
       会在每格标注色号并在底部汇总颜色用量。
     </p>
     <div class="export-actions">
-      <button class="primary" @click="downloadCsv">📊 导出 CSV</button>
-      <button class="ghost" @click="downloadPng">🖼️ 导出 PNG</button>
+      <button class="primary" @click="downloadPng">🖼️ 导出 PNG</button>
+      <button class="ghost" @click="downloadCsv">📊 导出 CSV</button>
     </div>
   </div>
 </template>

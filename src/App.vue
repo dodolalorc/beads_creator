@@ -284,6 +284,8 @@ function replaceColorBatch() {
   background-size: 20px 20px, 20px 20px, 100% 100%, 100% 100%;
   background-position: 0 0, 0 0, 0 0, 0 0;
   color: #e2e8f0;
+}
+*{
   box-sizing: border-box;
 }
 </style>
@@ -292,7 +294,7 @@ function replaceColorBatch() {
 .page {
   width: 90vw;
   margin: 0 auto;
-  padding: 32px 20px 64px;
+  padding: 32px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -302,14 +304,14 @@ function replaceColorBatch() {
 /* 画布工作区 - 左中右布局 */
 .canvas-workspace {
   width: 100%;
-  display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  display: flex;
   gap: 20px;
   align-items: start;
 }
 
 .left-controls,
 .right-controls {
+  width: 280px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -318,7 +320,8 @@ function replaceColorBatch() {
 }
 
 .canvas-container {
-  max-width: 100%;
+  flex: 1;
+  width: 100%;
   display: block;
   min-height: 400px;
 }
