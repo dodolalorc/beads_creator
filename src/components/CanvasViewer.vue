@@ -42,7 +42,7 @@ function handlePixelClick(rowIndex: number, colIndex: number) {
 </script>
 
 <template>
-  <section class="canvas-section">
+  <div class="canvas-section">
     <div class="canvas-header">
       <div>
         <p class="eyebrow">画布</p>
@@ -56,13 +56,21 @@ function handlePixelClick(rowIndex: number, colIndex: number) {
         </div>
       </div>
     </div>
-    <div class="pixel-grid" :style="{ gridTemplateColumns: `repeat(${canvasWidth}, 1fr)` }">
+    <div
+      class="pixel-grid"
+      :style="{ gridTemplateColumns: `repeat(${canvasWidth}, 1fr)` }"
+    >
       <template v-for="(row, r) in pixels" :key="`row-${r}`">
-        <button v-for="(cell, c) in row" :key="`cell-${r}-${c}`" class="pixel"
-          :style="{ background: paletteMap.get(cell)?.hex || '#111827' }" @click="handlePixelClick(r, c)"></button>
+        <span
+          v-for="(cell, c) in row"
+          :key="`cell-${r}-${c}`"
+          class="pixel"
+          :style="{ background: paletteMap.get(cell)?.hex || '#111827' }"
+          @click="handlePixelClick(r, c)"
+        ></span>
       </template>
     </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>
@@ -134,8 +142,8 @@ h2 {
 }
 
 .pixel-grid {
+  width: 100%;
   display: grid;
-  gap: 2px;
   max-width: 100%;
   background: #0b1021;
   padding: 8px;
@@ -144,10 +152,9 @@ h2 {
 }
 
 .pixel {
-  width: 100%;
+  ruby-span: 1;
   aspect-ratio: 1 / 1;
   border: 1px solid rgba(0, 0, 0, 0.35);
-  border-radius: 4px;
   transition: transform 120ms ease, box-shadow 120ms ease;
   cursor: pointer;
 }

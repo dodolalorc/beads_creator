@@ -14,27 +14,27 @@ type PaletteColor = {
 };
 
 type PaletteColorMap = {
-  'A': PaletteColor[];
-  'B': PaletteColor[];
-  'C': PaletteColor[];
-  'D': PaletteColor[];
-  'E': PaletteColor[];
-  'F': PaletteColor[];
-  'G': PaletteColor[];
-  'H': PaletteColor[];
-  'M': PaletteColor[];
+  A: PaletteColor[];
+  B: PaletteColor[];
+  C: PaletteColor[];
+  D: PaletteColor[];
+  E: PaletteColor[];
+  F: PaletteColor[];
+  G: PaletteColor[];
+  H: PaletteColor[];
+  M: PaletteColor[];
 };
 
 const palette = ref<PaletteColorMap>({
-  'A': [],
-  'B': [],
-  'C': [],
-  'D': [],
-  'E': [],
-  'F': [],
-  'G': [],
-  'H': [],
-  'M': []
+  A: [],
+  B: [],
+  C: [],
+  D: [],
+  E: [],
+  F: [],
+  G: [],
+  H: [],
+  M: [],
 });
 
 const paletteError = ref("");
@@ -42,8 +42,8 @@ const paletteLoading = ref(false);
 const selectedColorIds = ref<string[]>([]);
 const activeColorId = ref<string | null>(null);
 
-const canvasWidth = ref(30);
-const canvasHeight = ref(30);
+const canvasWidth = ref(60);
+const canvasHeight = ref(60);
 const pixels = ref<string[][]>([]);
 const sourceImageName = ref<string>("");
 const replaceFrom = ref<string | null>(null);
@@ -51,12 +51,16 @@ const replaceTo = ref<string | null>(null);
 const statusMessage = ref<string>("准备好生成像素画");
 
 const selectedColors = computed(() =>
-  Object.values(palette.value).flat().filter((c) => selectedColorIds.value.includes(c.id))
+  Object.values(palette.value)
+    .flat()
+    .filter((c) => selectedColorIds.value.includes(c.id))
 );
 
 const paletteMap = computed(() => {
   const map = new Map<string, PaletteColor>();
-  Object.values(palette.value).flat().forEach((c) => map.set(c.id, c));
+  Object.values(palette.value)
+    .flat()
+    .forEach((c) => map.set(c.id, c));
   return map;
 });
 
@@ -67,7 +71,9 @@ onMounted(async () => {
     if (!res.ok) throw new Error("无法加载色板数据");
     const data: PaletteColorMap = await res.json();
     palette.value = data;
-    selectedColorIds.value = Object.values(data).flat().map((c) => c.id);
+    selectedColorIds.value = Object.values(data)
+      .flat()
+      .map((c) => c.id);
     activeColorId.value = Object.values(data).flat()[0]?.id ?? null;
     initBlankCanvas();
   } catch (err) {
@@ -78,7 +84,10 @@ onMounted(async () => {
 });
 
 function initBlankCanvas() {
-  const fallbackColor = selectedColorIds.value[0] ?? Object.values(palette.value).flat()[0]?.id ?? "";
+  const fallbackColor =
+    selectedColorIds.value[0] ??
+    Object.values(palette.value).flat()[0]?.id ??
+    "";
   const rows: string[][] = [];
   for (let y = 0; y < canvasHeight.value; y += 1) {
     const row: string[] = [];
@@ -110,7 +119,9 @@ function colorDistance(a: PaletteColor, r: number, g: number, b: number) {
 }
 
 function findNearestColor(r: number, g: number, b: number): string {
-  const candidates = selectedColors.value.length ? selectedColors.value : Object.values(palette.value).flat();
+  const candidates = selectedColors.value.length
+    ? selectedColors.value
+    : Object.values(palette.value).flat();
   if (!candidates.length) return "";
   let bestId = candidates[0].id;
   let bestScore = Number.POSITIVE_INFINITY;
@@ -161,7 +172,9 @@ function quantizeImage(img: HTMLImageElement) {
     rows.push(row);
   }
   pixels.value = rows;
-  statusMessage.value = `已量化 ${sourceImageName.value || "图片"} 为 ${canvasWidth.value} x ${canvasHeight.value}`;
+  statusMessage.value = `已量化 ${sourceImageName.value || "图片"} 为 ${
+    canvasWidth.value
+  } x ${canvasHeight.value}`;
 }
 
 function replaceColorBatch() {
@@ -183,64 +196,92 @@ function replaceColorBatch() {
         <p class="eyebrow">像素画工作台</p>
         <h1>用自定义色板，把图片变成颗粒像素画</h1>
         <p class="lede">
-          选择固定色彩、设定画布尺寸，上传图片后自动量化；支持手工修正、换色、CSV 导出，以及带色号标注的 PNG。
+          选择固定色彩、设定画布尺寸，上传图片后自动量化；支持手工修正、换色、CSV
+          导出，以及带色号标注的 PNG。
         </p>
       </div>
     </header>
 
     <!-- 色板选择 - 独占一行 -->
-    <PaletteSelector :palette="palette" :selected-color-ids="selectedColorIds" :active-color-id="activeColorId"
-      @update="(ids) => selectedColorIds = ids" @set-active="(id) => activeColorId = id" />
+    <PaletteSelector
+      :palette="palette"
+      :selected-color-ids="selectedColorIds"
+      :active-color-id="activeColorId"
+      @update="(ids) => (selectedColorIds = ids)"
+      @set-active="(id) => (activeColorId = id)"
+    />
 
     <!-- 画布与控制区 - 左右布局 -->
     <div class="canvas-workspace">
       <!-- 左侧控制区 -->
       <aside class="left-controls">
-        <NewImportControls :status-message="statusMessage" :palette-error="paletteError" @init-blank="initBlankCanvas"
-          @upload-image="handleImageUpload" />
-        <CanvasSizeControls :width="canvasWidth" :height="canvasHeight" @update:width="(v) => (canvasWidth = v)"
-          @update:height="(v) => (canvasHeight = v)" @apply="initBlankCanvas" />
+        <NewImportControls
+          :status-message="statusMessage"
+          :palette-error="paletteError"
+          @init-blank="initBlankCanvas"
+          @upload-image="handleImageUpload"
+        />
+        <CanvasSizeControls
+          :width="canvasWidth"
+          :height="canvasHeight"
+          @update:width="(v) => (canvasWidth = v)"
+          @update:height="(v) => (canvasHeight = v)"
+          @apply="initBlankCanvas"
+        />
       </aside>
 
       <!-- 中间画布区 -->
       <div class="canvas-container">
-        <CanvasViewer :canvas-width="canvasWidth" :canvas-height="canvasHeight" :pixels="pixels"
-          :palette-map="paletteMap" :active-color-id="activeColorId" @pixel-click="(r, c) => {
+        <CanvasViewer
+          :canvas-width="canvasWidth"
+          :canvas-height="canvasHeight"
+          :pixels="pixels"
+          :palette-map="paletteMap"
+          :active-color-id="activeColorId"
+          @pixel-click="(r, c) => {
             if (!activeColorId) return;
             const next = pixels.map((row, ri) =>
               row.map((cell, ci) => (ri === r && ci === c ? activeColorId! : cell))
             );
             pixels = next;
-          }" />
+          }"
+        />
       </div>
 
       <!-- 右侧控制区 -->
       <aside class="right-controls">
-        <BatchReplaceControls :palette="palette" :replace-from="replaceFrom" :replace-to="replaceTo"
-          @update:replaceFrom="(v) => (replaceFrom = v)" @update:replaceTo="(v) => (replaceTo = v)"
-          @submit="replaceColorBatch" />
-        <ExportPanel :canvas-width="canvasWidth" :canvas-height="canvasHeight" :pixels="pixels"
-          :palette-map="paletteMap" />
+        <BatchReplaceControls
+          :palette="palette"
+          :replace-from="replaceFrom"
+          :replace-to="replaceTo"
+          @update:replaceFrom="(v) => (replaceFrom = v)"
+          @update:replaceTo="(v) => (replaceTo = v)"
+          @submit="replaceColorBatch"
+        />
+        <ExportPanel
+          :canvas-width="canvasWidth"
+          :canvas-height="canvasHeight"
+          :pixels="pixels"
+          :palette-map="paletteMap"
+        />
       </aside>
     </div>
   </div>
 </template>
 
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Monaco:wght@400;600;700&display=swap");
 
 :root {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   background: radial-gradient(circle at 10% 20%, #0ea5e9 0, transparent 18%),
-    radial-gradient(circle at 90% 10%, #22d3ee 0, transparent 20%),
-    #0b1021;
+    radial-gradient(circle at 90% 10%, #22d3ee 0, transparent 20%), #0b1021;
   color: #e5e7eb;
   box-sizing: border-box;
 }
 
 .page {
-  width: 100%;
-  width: fit-content;
+  width: 90vw;
   margin: 0 auto;
   padding: 32px 20px 64px;
   display: flex;
@@ -252,7 +293,11 @@ function replaceColorBatch() {
 /* 顶部标题区 */
 .hero {
   width: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.03)
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 24px;
@@ -299,6 +344,7 @@ h1 {
 }
 
 .canvas-container {
+  max-width: 100%;
   display: block;
   min-height: 400px;
 }
@@ -520,7 +566,6 @@ button {
 }
 
 @media (max-width: 768px) {
-
   .left-controls,
   .right-controls {
     grid-template-columns: 1fr;

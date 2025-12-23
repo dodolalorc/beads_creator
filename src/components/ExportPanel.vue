@@ -94,7 +94,7 @@ function downloadPng() {
 
   // 顶部信息（尺寸、颜色数）
   ctx.fillStyle = "#0f172a";
-  ctx.font = "16px 'Space Grotesk', 'Segoe UI', sans-serif";
+  ctx.font = "16px 'Monaco', 'Segoe UI', sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillText(`尺寸: ${props.canvasWidth} x ${props.canvasHeight}`, pad, pad);
