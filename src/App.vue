@@ -263,10 +263,10 @@ function replaceColorBatch() {
   </div>
 </template>
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Monaco:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap");
 
 :root {
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: "Spline Sans Mono", "Segoe UI", sans-serif;
   background: linear-gradient(
       90deg,
       rgba(96, 165, 250, 0.08) 1px,

@@ -82,8 +82,13 @@ function downloadPng() {
       Math.floor(1200 / Math.max(canvasWidth.value, canvasHeight.value))
     )
   );
-  const gridWidth = canvasWidth.value * cell;
-  const gridHeight = canvasHeight.value * cell;
+  // 内部像素网格尺寸（不含坐标轴）
+  const innerGridWidth = canvasWidth.value * cell;
+  const innerGridHeight = canvasHeight.value * cell;
+  // 总网格尺寸（含四边坐标轴，各 +1 cell）
+  const gridWidth = innerGridWidth + cell * 2;
+  const gridHeight = innerGridHeight + cell * 2;
+  const axisColor = "#F5F5DC"; // 米黄色
 
   // 底部色号图例布局：每行固定 12 个
   const legendCols = 12;
@@ -95,15 +100,31 @@ function downloadPng() {
   const legendRows = Math.ceil(colorUsage.value.length / legendCols);
   const legendHeight = legendRows * legendItemHeight + 12;
 
+  // 使用设备像素比提升导出清晰度，并禁用插值以保持像素边缘清晰
+  const DPR = Math.min(
+    4,
+    Math.max(1, Math.floor(window.devicePixelRatio || 1))
+  );
   const canvas = document.createElement("canvas");
-  canvas.width = gridWidth + pad * 2;
-  canvas.height = pad + 32 + gridHeight + pad + legendHeight + pad;
+  // 画布实际像素尺寸按 DPR 放大，样式尺寸保持逻辑像素，后面绘图使用逻辑坐标
+  const logicalWidth = gridWidth + pad * 2;
+  const logicalHeight = pad + 32 + gridHeight + pad + legendHeight + pad;
+  canvas.width = logicalWidth * DPR;
+  canvas.height = logicalHeight * DPR;
+  canvas.style.width = `${logicalWidth}px`;
+  canvas.style.height = `${logicalHeight}px`;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  // 将坐标系缩放回逻辑像素，这样后续所有绘制代码无需改动
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // 关闭平滑以获得像素画的清晰边缘
+  // @ts-ignore
+  if (typeof ctx.imageSmoothingEnabled !== "undefined")
+    ctx.imageSmoothingEnabled = false;
 
-  // 白色留白背景
+  // 白色留白背景（使用逻辑像素尺寸）
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
   // 顶部信息（尺寸、颜色数）
   ctx.fillStyle = "#0f172a";
@@ -119,28 +140,118 @@ function downloadPng() {
   ctx.fillStyle = "#0b1021";
   ctx.fillRect(gridX, gridY, gridWidth, gridHeight);
 
+  // 绘制四边坐标轴方格
+  // 顶部坐标轴：列号 1..W（角落仅填充）
+  for (let col = 0; col < canvasWidth.value + 2; col += 1) {
+    const x = gridX + col * cell;
+    const y = gridY;
+    ctx.fillStyle = axisColor;
+    ctx.fillRect(x, y, cell, cell);
+    if (col >= 1 && col <= canvasWidth.value) {
+      ctx.fillStyle = "#0f172a";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `${Math.max(
+        10,
+        Math.floor(cell * 0.4)
+      )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+      ctx.fillText(String(col), x + cell / 2, y + cell / 2);
+    }
+  }
+
+  // 底部坐标轴：列号 1..W（角落仅填充）
+  for (let col = 0; col < canvasWidth.value + 2; col += 1) {
+    const x = gridX + col * cell;
+    const y = gridY + (canvasHeight.value + 1) * cell;
+    ctx.fillStyle = axisColor;
+    ctx.fillRect(x, y, cell, cell);
+    if (col >= 1 && col <= canvasWidth.value) {
+      ctx.fillStyle = "#0f172a";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `${Math.max(
+        10,
+        Math.floor(cell * 0.4)
+      )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+      ctx.fillText(String(col), x + cell / 2, y + cell / 2);
+    }
+  }
+
+  // 左侧坐标轴：行号 1..H（角落仅填充）
+  for (let row = 1; row <= canvasHeight.value; row += 1) {
+    const x = gridX;
+    const y = gridY + row * cell;
+    ctx.fillStyle = axisColor;
+    ctx.fillRect(x, y, cell, cell);
+    ctx.fillStyle = "#0f172a";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `${Math.max(
+      10,
+      Math.floor(cell * 0.4)
+    )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+    ctx.fillText(String(row), x + cell / 2, y + cell / 2);
+  }
+
+  // 右侧坐标轴：行号 1..H（角落仅填充）
+  for (let row = 1; row <= canvasHeight.value; row += 1) {
+    const x = gridX + (canvasWidth.value + 1) * cell;
+    const y = gridY + row * cell;
+    ctx.fillStyle = axisColor;
+    ctx.fillRect(x, y, cell, cell);
+    ctx.fillStyle = "#0f172a";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `${Math.max(
+      10,
+      Math.floor(cell * 0.4)
+    )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+    ctx.fillText(String(row), x + cell / 2, y + cell / 2);
+  }
+
+  // 绘制内部像素网格（偏移 +1 cell 以避开坐标轴）
   for (let y = 0; y < canvasHeight.value; y += 1) {
     for (let x = 0; x < canvasWidth.value; x += 1) {
       const color = props.paletteMap.get(props.pixels[y][x]);
+      const px = gridX + (x + 1) * cell;
+      const py = gridY + (y + 1) * cell;
       ctx.fillStyle = color?.hex ?? "#1f2937";
-      ctx.fillRect(gridX + x * cell, gridY + y * cell, cell, cell);
+      ctx.fillRect(px, py, cell, cell);
       ctx.strokeStyle = "rgba(15,23,42,0.4)";
-      ctx.strokeRect(gridX + x * cell, gridY + y * cell, cell, cell);
+      ctx.strokeRect(px, py, cell, cell);
       if (color) {
         ctx.fillStyle = contrastColor(color.hex);
-        ctx.font = `${Math.max(
-          10,
-          Math.floor(cell * 0.32)
-        )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+        // 文字垂直约占格子的 1/3，高度取 cell * 0.33，保底为 8px
+        const labelFontSize = Math.max(8, Math.floor(cell * 0.33));
+        ctx.font = `${labelFontSize}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(
-          color.name,
-          gridX + x * cell + cell / 2,
-          gridY + y * cell + cell / 2
-        );
+        // 限制文字最大宽度为格子宽度的 60%，留出横向空白
+        const labelMaxWidth = Math.floor(cell * 0.6);
+        ctx.fillText(color.name, px + cell / 2, py + cell / 2, labelMaxWidth);
       }
     }
+  }
+
+  // 每隔 10 个格子加粗网格线（仅覆盖内部网格区域）
+  const thick = Math.max(2, Math.floor(cell * 0.1));
+  ctx.strokeStyle = "rgba(15,23,42,0.8)";
+  ctx.lineWidth = thick;
+  // 垂直加粗线
+  for (let k = 10; k < canvasWidth.value; k += 10) {
+    const xLine = gridX + (k + 1) * cell;
+    ctx.beginPath();
+    ctx.moveTo(xLine, gridY + cell);
+    ctx.lineTo(xLine, gridY + cell + canvasHeight.value * cell);
+    ctx.stroke();
+  }
+  // 水平加粗线
+  for (let k = 10; k < canvasHeight.value; k += 10) {
+    const yLine = gridY + (k + 1) * cell;
+    ctx.beginPath();
+    ctx.moveTo(gridX + cell, yLine);
+    ctx.lineTo(gridX + cell + canvasWidth.value * cell, yLine);
+    ctx.stroke();
   }
 
   // 底部图例背景
@@ -185,12 +296,12 @@ function downloadPng() {
     const centerY = itemY + h / 2;
 
     // 数量（上，居中）
-    ctx.font = "14px 'Space Grotesk', 'Segoe UI', sans-serif";
+    ctx.font = "14px 'Spline Sans Mono', 'Space Grotesk', 'Segoe UI', sans-serif";
     ctx.textBaseline = "alphabetic";
     ctx.fillText(`${entry.count}`, centerX, centerY - 6);
 
     // 名称（下，居中）
-    ctx.font = "13px 'Space Grotesk', 'Segoe UI', sans-serif";
+    ctx.font = "13px 'Spline Sans Mono', 'Space Grotesk', 'Segoe UI', sans-serif";
     ctx.textBaseline = "top";
     ctx.fillText(entry.color.name, centerX, centerY + 6);
   });

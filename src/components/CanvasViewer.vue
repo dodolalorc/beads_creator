@@ -173,7 +173,7 @@ h2 {
 
 .usage.collapsed {
   /* 仅显示一行颜色条目 */
-  max-height: 36px;
+  max-height: 52px;
   overflow: hidden;
 }
 
