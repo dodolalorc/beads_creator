@@ -1,61 +1,59 @@
-# beads_creator · 拼豆像素画画板
+# Beads Creator · 拼豆像素画板
 
-用固定色板把图片量化成可编辑的拼豆像素画，可手动涂改、批量换色，并导出 CSV/PNG 便于制作和备料。基于 **Vue 3 + TypeScript + Vite**，桌面端使用 **Tauri 2**。
+Beads Creator 是一款专为拼豆/像素画爱好者打造的在线画板工具，支持图片量化、手动涂色、批量换色、颜色统计与多格式导出，适用于 Web 和桌面端（Tauri）。
 
-## 功能
+## 功能亮点
 
-- 预设色板：从 `public/palette.json` 读取系列色（含编号/名称/HEX），可全选/清空，点击设定当前画笔。
-- 图片量化：上传图片后按画布尺寸缩放，将每个像素映射到最接近的色板颜色。
-- 手动上色：点击网格像素使用当前画笔涂改。
-- 批量换色：选择来源色与目标色，一键替换全局像素。
-- 导出：
-  - CSV：输出色名+色号。
-  - PNG：输出带 HEX 标注的像素图，并附颜色用量统计图例。
-- 颜色统计：实时显示每种颜色的使用数量。
+- **色板管理**：支持自定义色板（编号/名称/HEX），一键全选/清空，便捷切换画笔色。
+- **图片量化**：上传图片后自动缩放并量化为最接近色板的像素画。
+- **手动编辑**：点击网格像素即可上色，支持批量换色操作。
+- **导出多样**：支持导出 CSV（色名+色号）和 PNG（带 HEX 标注及用量统计）。
+- **颜色统计**：实时统计每种颜色的用量，辅助备料与制作。
+- **跨平台**：Web 端即开即用，桌面端基于 Tauri，支持本地运行。
 
-## 环境准备
+## 快速开始
 
-- Node.js 18+（可用 npm/pnpm/bun）。
-- Rust 工具链（Tauri 桌面端需要）：确保 `cargo`、`rustc` 可用。
+### 环境要求
 
-## 快速开始（Web）
+- Node.js 18+
+- Rust 工具链（仅桌面端/Tauri 需要）
 
-```bash
-npm install      # 或 bun install / pnpm install
-npm run dev      # 启动 Vite 开发
-```
-
-构建与预览：
+### 本地开发
 
 ```bash
-npm run build    # 类型检查并打包
-npm run preview  # 预览打包结果
+npm install
+npm run dev
 ```
 
-## 桌面端（Tauri）
+### 构建与预览
 
 ```bash
-npm run tauri dev    # 开发模式
-npm run tauri build  # 打包桌面应用
+npm run build
+npm run preview
 ```
 
-## 使用指南
+### 桌面端（Tauri）
 
-1. 画布：在左侧面板设置宽高（默认 30×30），点击“新建画布”。
-2. 量化：上传图片，应用会按画布尺寸缩放并量化到色板。
-3. 涂改：在色板点击色块设定画笔，再点击画布像素进行微调。
-4. 批量换色：选择“从/替换为”颜色后执行替换。
-5. 导出：
-   - CSV：每格输出 `色名 (HEX)`。
-   - PNG：网格带 HEX 标注，底部附用量统计。
+```bash
+npm run tauri dev
+npm run tauri build
+```
 
-## 配置
+## 使用说明
 
-- 色板：编辑 `public/palette.json`，字段 `id`、`name`、`hex`。
-- 画布限制：`App.vue` 内默认 1–200（可调整）。
-- 导出细节：PNG 生成逻辑在 `downloadPng`，可自定义单格大小/字体。
+1. **新建画布**：设置宽高（默认 30×30），点击“新建画布”。
+2. **图片量化**：上传图片，自动生成像素画。
+3. **手动涂色**：点击色板选择画笔，再点击画布像素微调。
+4. **批量换色**：选择来源色与目标色，一键替换全局像素。
+5. **导出**：支持 CSV/PNG 格式，PNG 附带色号与用量统计。
 
-## 项目结构（摘录）
+## 配置与扩展
+
+- **色板**：编辑 `public/palette.json`，自定义色号、名称、HEX。
+- **画布限制**：可在 `App.vue` 调整画布尺寸范围。
+- **导出细节**：PNG 生成逻辑可在 `downloadPng` 方法自定义。
+
+## 目录结构
 
 ```
 ├─ public/
@@ -63,22 +61,22 @@ npm run tauri build  # 打包桌面应用
 ├─ src/
 │  ├─ main.ts               # 入口
 │  ├─ App.vue               # 主页面与核心逻辑
-│  └─ components/
+│  └─ components/           # 主要功能组件
 │     ├─ PaletteSelector.vue
 │     ├─ CanvasViewer.vue
 │     ├─ NewImportControls.vue
 │     ├─ CanvasSizeControls.vue
 │     ├─ BatchReplaceControls.vue
-│     └─ ExportTools.vue
+│     └─ ExportPanel.vue
 ├─ src-tauri/               # Tauri 配置与 Rust 入口
 └─ package.json
 ```
 
-## 脚本
+## 常用脚本
 
 - `npm run dev` / `npm run build` / `npm run preview`
 - `npm run tauri dev` / `npm run tauri build`
 
 ## 许可
 
-未声明许可证（default: all rights reserved）。如需开放协议，请在根目录添加 LICENSE 并更新本说明。
+本项目暂未声明开源协议，默认保留所有权利。如需开放授权，请在根目录添加 LICENSE 文件。
