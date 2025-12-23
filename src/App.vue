@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import HeaderBar from "./components/HeaderBar.vue";
 import PaletteSelector from "./components/PaletteSelector.vue";
 import CanvasViewer from "./components/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
@@ -42,13 +43,23 @@ const paletteLoading = ref(false);
 const selectedColorIds = ref<string[]>([]);
 const activeColorId = ref<string | null>(null);
 
-const canvasWidth = ref(60);
-const canvasHeight = ref(60);
+const canvasSize = ref({ width: 60, height: 60 });
 const pixels = ref<string[][]>([]);
 const sourceImageName = ref<string>("");
 const replaceFrom = ref<string | null>(null);
 const replaceTo = ref<string | null>(null);
 const statusMessage = ref<string>("准备好生成像素画");
+
+watch(
+  () => canvasSize.value,
+  (next, prev) => {
+    if (!prev) return;
+    if (next.width !== prev.width || next.height !== prev.height) {
+      initBlankCanvas();
+    }
+  },
+  { deep: true }
+);
 
 const selectedColors = computed(() =>
   Object.values(palette.value)
@@ -89,15 +100,16 @@ function initBlankCanvas() {
     Object.values(palette.value).flat()[0]?.id ??
     "";
   const rows: string[][] = [];
-  for (let y = 0; y < canvasHeight.value; y += 1) {
+  const { width, height } = canvasSize.value;
+  for (let y = 0; y < height; y += 1) {
     const row: string[] = [];
-    for (let x = 0; x < canvasWidth.value; x += 1) {
+    for (let x = 0; x < width; x += 1) {
       row.push(fallbackColor);
     }
     rows.push(row);
   }
   pixels.value = rows;
-  statusMessage.value = `创建了 ${canvasWidth.value} x ${canvasHeight.value} 的空白画布`;
+  statusMessage.value = `创建了 ${width} x ${height} 的空白画布`;
 }
 
 function hexToRgb(hex: string) {
@@ -150,10 +162,11 @@ function handleImageUpload(event: Event) {
 }
 
 function quantizeImage(img: HTMLImageElement) {
-  if (!canvasWidth.value || !canvasHeight.value) return;
+  const { width, height } = canvasSize.value;
+  if (!width || !height) return;
   const canvas = document.createElement("canvas");
-  canvas.width = canvasWidth.value;
-  canvas.height = canvasHeight.value;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -172,9 +185,9 @@ function quantizeImage(img: HTMLImageElement) {
     rows.push(row);
   }
   pixels.value = rows;
-  statusMessage.value = `已量化 ${sourceImageName.value || "图片"} 为 ${
-    canvasWidth.value
-  } x ${canvasHeight.value}`;
+  statusMessage.value = `已量化 ${
+    sourceImageName.value || "图片"
+  } 为 ${width} x ${height} 像素画`;
 }
 
 function replaceColorBatch() {
@@ -191,18 +204,9 @@ function replaceColorBatch() {
 <template>
   <div class="page">
     <!-- 顶部标题区 -->
-    <header class="hero">
-      <div>
-        <p class="eyebrow">像素画工作台</p>
-        <h1>用自定义色板，把图片变成颗粒像素画</h1>
-        <p class="lede">
-          选择固定色彩、设定画布尺寸，上传图片后自动量化；支持手工修正、换色、CSV
-          导出，以及带色号标注的 PNG。
-        </p>
-      </div>
-    </header>
+    <HeaderBar />
 
-    <!-- 色板选择 - 独占一行 -->
+    <!-- 色板选择 -->
     <PaletteSelector
       :palette="palette"
       :selected-color-ids="selectedColorIds"
@@ -221,20 +225,13 @@ function replaceColorBatch() {
           @init-blank="initBlankCanvas"
           @upload-image="handleImageUpload"
         />
-        <CanvasSizeControls
-          :width="canvasWidth"
-          :height="canvasHeight"
-          @update:width="(v) => (canvasWidth = v)"
-          @update:height="(v) => (canvasHeight = v)"
-          @apply="initBlankCanvas"
-        />
+        <CanvasSizeControls v-model="canvasSize" />
       </aside>
 
       <!-- 中间画布区 -->
       <div class="canvas-container">
         <CanvasViewer
-          :canvas-width="canvasWidth"
-          :canvas-height="canvasHeight"
+          v-model="canvasSize"
           :pixels="pixels"
           :palette-map="paletteMap"
           :active-color-id="activeColorId"
@@ -252,15 +249,12 @@ function replaceColorBatch() {
       <aside class="right-controls">
         <BatchReplaceControls
           :palette="palette"
-          :replace-from="replaceFrom"
-          :replace-to="replaceTo"
-          @update:replaceFrom="(v) => (replaceFrom = v)"
-          @update:replaceTo="(v) => (replaceTo = v)"
+          v-model:replace-from="replaceFrom"
+          v-model:replace-to="replaceTo"
           @submit="replaceColorBatch"
         />
         <ExportPanel
-          :canvas-width="canvasWidth"
-          :canvas-height="canvasHeight"
+          v-model="canvasSize"
           :pixels="pixels"
           :palette-map="paletteMap"
         />
@@ -268,18 +262,33 @@ function replaceColorBatch() {
     </div>
   </div>
 </template>
-
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Monaco:wght@400;600;700&display=swap");
 
 :root {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 10% 20%, #0ea5e9 0, transparent 18%),
-    radial-gradient(circle at 90% 10%, #22d3ee 0, transparent 20%), #0b1021;
-  color: #e5e7eb;
+  background: linear-gradient(
+      90deg,
+      rgba(96, 165, 250, 0.08) 1px,
+      transparent 1px
+    ),
+    linear-gradient(rgba(96, 165, 250, 0.08) 1px, transparent 1px),
+    radial-gradient(
+      circle at 50% 0%,
+      #1e3a8a 0%,
+      #1e40af 10%,
+      #1e3a8a 20%,
+      transparent 35%
+    ),
+    #0f172a;
+  background-size: 20px 20px, 20px 20px, 100% 100%, 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  color: #e2e8f0;
   box-sizing: border-box;
 }
+</style>
 
+<style scoped>
 .page {
   width: 90vw;
   margin: 0 auto;
@@ -288,41 +297,6 @@ function replaceColorBatch() {
   flex-direction: column;
   align-items: center;
   gap: 24px;
-}
-
-/* 顶部标题区 */
-.hero {
-  width: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.03)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 16px 60px rgba(15, 23, 42, 0.6);
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
-  color: #7dd3fc;
-  margin-bottom: 6px;
-}
-
-h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-  color: #e2e8f0;
-}
-
-.lede {
-  margin: 0;
-  color: #cbd5e1;
-  max-width: 100%;
-  line-height: 1.6;
 }
 
 /* 画布工作区 - 左中右布局 */
@@ -540,49 +514,5 @@ button {
   background: rgba(252, 165, 165, 0.1);
   border-radius: 8px;
   border-left: 3px solid #fca5a5;
-}
-
-/* 响应式布局 */
-@media (max-width: 1200px) {
-  .canvas-workspace {
-    grid-template-columns: 240px 1fr 240px;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .canvas-workspace {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .left-controls,
-  .right-controls {
-    position: static;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-}
-
-@media (max-width: 768px) {
-  .left-controls,
-  .right-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .control-group {
-    padding: 14px;
-  }
-
-  .section-title {
-    font-size: 13px;
-  }
-
-  .button-col button,
-  .button-col label {
-    font-size: 13px;
-    padding: 9px 14px;
-  }
 }
 </style>

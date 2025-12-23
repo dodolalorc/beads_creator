@@ -7,12 +7,17 @@ type PaletteColor = {
   hex: string;
 };
 
+const canvasSize = defineModel<{ width: number; height: number }>({
+  default: () => ({ width: 60, height: 60 }),
+});
+
 const props = defineProps<{
-  canvasWidth: number;
-  canvasHeight: number;
   pixels: string[][];
   paletteMap: Map<string, PaletteColor>;
 }>();
+
+const canvasWidth = computed(() => canvasSize.value.width);
+const canvasHeight = computed(() => canvasSize.value.height);
 
 const colorUsage = computed(() => {
   const counts = new Map<string, number>();
@@ -62,7 +67,7 @@ function downloadCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `pixel-art-${props.canvasWidth}x${props.canvasHeight}.csv`;
+  link.download = `pixel-art-${canvasWidth.value}x${canvasHeight.value}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -70,15 +75,23 @@ function downloadCsv() {
 function downloadPng() {
   if (!props.pixels.length) return;
   const pad = 24; // 外层白色留白
-  const cell = Math.max(16, Math.min(48, Math.floor(1200 / Math.max(props.canvasWidth, props.canvasHeight))));
-  const gridWidth = props.canvasWidth * cell;
-  const gridHeight = props.canvasHeight * cell;
+  const cell = Math.max(
+    16,
+    Math.min(
+      48,
+      Math.floor(1200 / Math.max(canvasWidth.value, canvasHeight.value))
+    )
+  );
+  const gridWidth = canvasWidth.value * cell;
+  const gridHeight = canvasHeight.value * cell;
 
   // 底部色号图例布局：每行固定 12 个
   const legendCols = 12;
   const legendItemGap = 8;
   const legendItemHeight = 56;
-  const legendItemWidth = Math.floor((gridWidth - (legendCols - 1) * legendItemGap) / legendCols);
+  const legendItemWidth = Math.floor(
+    (gridWidth - (legendCols - 1) * legendItemGap) / legendCols
+  );
   const legendRows = Math.ceil(colorUsage.value.length / legendCols);
   const legendHeight = legendRows * legendItemHeight + 12;
 
@@ -97,7 +110,7 @@ function downloadPng() {
   ctx.font = "16px 'Monaco', 'Segoe UI', sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(`尺寸: ${props.canvasWidth} x ${props.canvasHeight}`, pad, pad);
+  ctx.fillText(`尺寸: ${canvasWidth.value} x ${canvasHeight.value}`, pad, pad);
   ctx.fillText(`颜色数: ${colorUsage.value.length}`, pad, pad + 20);
 
   // 绘制网格背景
@@ -106,8 +119,8 @@ function downloadPng() {
   ctx.fillStyle = "#0b1021";
   ctx.fillRect(gridX, gridY, gridWidth, gridHeight);
 
-  for (let y = 0; y < props.canvasHeight; y += 1) {
-    for (let x = 0; x < props.canvasWidth; x += 1) {
+  for (let y = 0; y < canvasHeight.value; y += 1) {
+    for (let x = 0; x < canvasWidth.value; x += 1) {
       const color = props.paletteMap.get(props.pixels[y][x]);
       ctx.fillStyle = color?.hex ?? "#1f2937";
       ctx.fillRect(gridX + x * cell, gridY + y * cell, cell, cell);
@@ -115,10 +128,17 @@ function downloadPng() {
       ctx.strokeRect(gridX + x * cell, gridY + y * cell, cell, cell);
       if (color) {
         ctx.fillStyle = contrastColor(color.hex);
-        ctx.font = `${Math.max(10, Math.floor(cell * 0.32))}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
+        ctx.font = `${Math.max(
+          10,
+          Math.floor(cell * 0.32)
+        )}px 'Monaco', 'Space Grotesk', 'Segoe UI', sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(color.name, gridX + x * cell + cell / 2, gridY + y * cell + cell / 2);
+        ctx.fillText(
+          color.name,
+          gridX + x * cell + cell / 2,
+          gridY + y * cell + cell / 2
+        );
       }
     }
   }
@@ -178,7 +198,7 @@ function downloadPng() {
   const url = canvas.toDataURL("image/png");
   const link = document.createElement("a");
   link.href = url;
-  link.download = `pixel-art-${props.canvasWidth}x${props.canvasHeight}.png`;
+  link.download = `pixel-art-${canvasWidth.value}x${canvasHeight.value}.png`;
   link.click();
 }
 </script>
@@ -187,7 +207,8 @@ function downloadPng() {
   <div class="panel">
     <div class="panel-title">导出</div>
     <p class="note">
-      CSV 将按当前像素网格导出色名与色号；PNG 会在每格标注色号并在底部汇总颜色用量。
+      CSV 将按当前像素网格导出色名与色号；PNG
+      会在每格标注色号并在底部汇总颜色用量。
     </p>
     <div class="export-actions">
       <button class="primary" @click="downloadCsv">📊 导出 CSV</button>

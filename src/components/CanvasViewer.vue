@@ -7,9 +7,11 @@ type PaletteColor = {
   hex: string;
 };
 
+const canvasSize = defineModel<{ width: number; height: number }>({
+  default: () => ({ width: 60, height: 60 }),
+});
+
 const props = defineProps<{
-  canvasWidth: number;
-  canvasHeight: number;
   pixels: string[][];
   paletteMap: Map<string, PaletteColor>;
   activeColorId: string | null;
@@ -18,6 +20,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   pixelClick: [rowIndex: number, colIndex: number];
 }>();
+
+const canvasWidth = computed(() => canvasSize.value.width);
+const canvasHeight = computed(() => canvasSize.value.height);
 
 const colorUsage = computed(() => {
   const counts = new Map<string, number>();
