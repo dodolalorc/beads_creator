@@ -25,6 +25,7 @@ const canvasWidth = computed(() => canvasSize.value.width);
 const canvasHeight = computed(() => canvasSize.value.height);
 
 const showAllUsage = ref(false);
+const showColorName = ref(false);
 
 const colorUsage = computed(() => {
   const counts = new Map<string, number>();
@@ -55,6 +56,14 @@ function handlePixelClick(rowIndex: number, colIndex: number) {
         <p class="eyebrow">画布</p>
         <h2>{{ canvasWidth }} × {{ canvasHeight }} 像素</h2>
         <p class="note">点击单格编辑；上方色板选择画笔色。</p>
+        <label class="show-color-label">
+          <input
+            type="checkbox"
+            v-model="showColorName"
+            class="show-color-checkbox"
+          />
+          显示色号
+        </label>
       </div>
       <div class="usage" :class="{ collapsed: !showAllUsage }">
         <div class="chip" v-for="entry in colorUsage" :key="entry.id">
@@ -109,9 +118,19 @@ function handlePixelClick(rowIndex: number, colIndex: number) {
           v-for="(cell, c) in row"
           :key="`cell-${r}-${c}`"
           class="pixel"
-          :style="{ background: paletteMap.get(cell)?.hex || '#111827' }"
+          :style="{
+            background: paletteMap.get(cell)?.hex || '#111827',
+            position: 'relative',
+          }"
           @click="handlePixelClick(r, c)"
-        ></span>
+        >
+          <template v-if="showColorName && paletteMap.get(cell)">
+            <span class="pixel-label">{{ paletteMap.get(cell)?.name }}</span>
+          </template>
+          <span v-if="paletteMap.get(cell)" class="pixel-tooltip">
+            {{ paletteMap.get(cell)?.name }}
+          </span>
+        </span>
       </template>
     </div>
   </div>
@@ -178,7 +197,7 @@ h2 {
 }
 
 .chip {
-  width: 100px;
+  width: 120px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -215,6 +234,76 @@ h2 {
   border: 1px solid rgba(0, 0, 0, 0.35);
   transition: transform 120ms ease, box-shadow 120ms ease;
   cursor: pointer;
+  position: relative;
+  /* 让tooltip定位于像素格 */
+  overflow: visible;
+}
+.pixel-tooltip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -110%);
+  background: rgba(30, 41, 59, 0.98);
+  color: #fff;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.pixel:hover .pixel-tooltip {
+  display: block;
+  opacity: 1;
+}
+
+.pixel-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 2px #000;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 字号自适应，纵向约占1/3，横向留边距 */
+  font-size: min(33%, 0.9em, 3vw);
+  line-height: 1;
+  padding: 0 2px;
+}
+
+/* 显示色号按钮样式 */
+.show-color-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #e2e8f0;
+  user-select: none;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid #0ea5e9;
+  transition: background 0.15s;
+}
+.show-color-label:hover {
+  background: rgba(14, 165, 233, 0.18);
+}
+.show-color-checkbox {
+  accent-color: #0ea5e9;
+  width: 18px;
+  height: 18px;
+  margin: 0;
 }
 
 .pixel:hover {
