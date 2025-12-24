@@ -7,6 +7,9 @@
         选择固定色彩、设定画布尺寸，上传图片后自动量化；支持手工修正、换色、CSV
         导出，以及带色号标注的 PNG。
       </p>
+      <p class="star-tip">
+        如果你喜欢这个项目，欢迎在 GitHub 仓库点个 Star 支持！
+      </p>
     </div>
   </header>
 </template>
@@ -44,4 +47,12 @@ h1 {
   max-width: 100%;
   line-height: 1.6;
 }
+
+.star-tip {
+  margin-top: 12px;
+  color: #fbbf24;
+  font-size: 15px;
+  font-weight: 500;
+}
+
 </style>

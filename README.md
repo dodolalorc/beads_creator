@@ -79,4 +79,4 @@ npm run tauri build
 
 ## 许可
 
-本项目暂未声明开源协议，默认保留所有权利。如需开放授权，请在根目录添加 LICENSE 文件。
+本项目采用 [MIT License](./LICENSE) 开源协议。
