@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import HeaderBar from "./components/HeaderBar.vue";
-import PaletteSelector from "./components/PaletteSelector.vue";
+import PaletteSelector from "./components/palette-selector/PaletteSelector.vue";
 import CanvasViewer from "./components/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
 import CanvasSizeControls from "./components/CanvasSizeControls.vue";
