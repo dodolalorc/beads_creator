@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import HeaderBar from "./components/HeaderBar.vue";
 import PaletteSelector from "./components/palette-selector/PaletteSelector.vue";
-import CanvasViewer from "./components/CanvasViewer.vue";
+import CanvasViewer from "./components/canvas-viewer/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
 import CanvasSizeControls from "./components/canvas-size-controls/CanvasSizeControls.vue";
 import BatchReplaceControls from "./components/batch-replace-controls/BatchReplaceControls.vue";
