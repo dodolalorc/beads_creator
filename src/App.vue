@@ -6,7 +6,7 @@ import CanvasViewer from "./components/canvas-viewer/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
 import CanvasSizeControls from "./components/canvas-size-controls/CanvasSizeControls.vue";
 import BatchReplaceControls from "./components/batch-replace-controls/BatchReplaceControls.vue";
-import ExportPanel from "./components/ExportPanel.vue";
+import ExportPanel from "./components/export-panel/ExportPanel.vue";
 
 type PaletteColor = {
   id: string;
