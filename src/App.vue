@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import HeaderBar from "./components/HeaderBar.vue";
+import HeaderBar from "./components/header-bar/HeaderBar.vue";
 import PaletteSelector from "./components/palette-selector/PaletteSelector.vue";
 import CanvasViewer from "./components/canvas-viewer/CanvasViewer.vue";
 import NewImportControls from "./components/NewImportControls.vue";
