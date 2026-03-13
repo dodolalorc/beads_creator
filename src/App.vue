@@ -3,28 +3,23 @@ import { computed, onMounted, ref, watch } from "vue";
 import HeaderBar from "./components/header-bar/HeaderBar.vue";
 import PaletteSelector from "./components/palette-selector/PaletteSelector.vue";
 import CanvasViewer from "./components/canvas-viewer/CanvasViewer.vue";
-import NewImportControls from "./components/import-controls/ImportControls.vue";
+import ImportControls from "./components/import-controls/ImportControls.vue";
 import CanvasSizeControls from "./components/canvas-size-controls/CanvasSizeControls.vue";
 import BatchReplaceControls from "./components/batch-replace-controls/BatchReplaceControls.vue";
 import ExportPanel from "./components/export-panel/ExportPanel.vue";
-
-type PaletteColor = {
-  id: string;
-  name: string;
-  hex: string;
-};
-
-type PaletteColorMap = {
-  A: PaletteColor[];
-  B: PaletteColor[];
-  C: PaletteColor[];
-  D: PaletteColor[];
-  E: PaletteColor[];
-  F: PaletteColor[];
-  G: PaletteColor[];
-  H: PaletteColor[];
-  M: PaletteColor[];
-};
+import {
+  DEFAULT_DOUBAO_BASE_URL,  createBlankPixels,
+  flattenPalette,
+  loadImageFromUrl,
+  readFileAsDataUrl,
+  renderImageToPixels,
+  resizePixels,
+  type ImportSettings,
+  type PaletteColor,
+  type PaletteColorMap,
+} from "./lib/pixel-art";
+import { runUnfakeEdgeCleanup } from "./lib/unfake";
+import { invokeDoubaoImageEdit, isTauriEnvironment } from "./lib/doubao";
 
 const palette = ref<PaletteColorMap>({
   A: [],
@@ -37,215 +32,274 @@ const palette = ref<PaletteColorMap>({
   H: [],
   M: [],
 });
-
 const paletteError = ref("");
 const paletteLoading = ref(false);
+const processingImage = ref(false);
+
 const selectedColorIds = ref<string[]>([]);
 const activeColorId = ref<string | null>(null);
-
 const canvasSize = ref({ width: 60, height: 60 });
 const pixels = ref<string[][]>([]);
-const sourceImageName = ref<string>("");
+const sourceImageName = ref("");
 const replaceFrom = ref<string | null>(null);
 const replaceTo = ref<string | null>(null);
-const statusMessage = ref<string>("准备好生成像素画");
+const statusMessage = ref("准备好制作拼豆图纸");
 
-watch(
-  () => canvasSize.value,
-  (next, prev) => {
-    if (!prev) return;
-    if (next.width !== prev.width || next.height !== prev.height) {
-      initBlankCanvas();
-    }
-  },
-  { deep: true }
-);
+const importSettings = ref<ImportSettings>({
+  mode: "default",
+  style: "bead-contrast",
+  prompt: "",
+  doubaoApiKey: "",
+  doubaoModel: "doubao-seededit-3-0-i2i-250628",
+  doubaoBaseUrl: DEFAULT_DOUBAO_BASE_URL,
+  doubaoGuidanceScale: 5.5,
+  doubaoSize: "adaptive",
+  useUnfake: true,
+});
 
-const selectedColors = computed(() =>
-  Object.values(palette.value)
-    .flat()
-    .filter((c) => selectedColorIds.value.includes(c.id))
-);
+const allColors = computed(() => flattenPalette(palette.value));
+
+const selectedColors = computed(() => {
+  const allowed = new Set(selectedColorIds.value);
+  return allColors.value.filter((color) => allowed.has(color.id));
+});
 
 const paletteMap = computed(() => {
   const map = new Map<string, PaletteColor>();
-  Object.values(palette.value)
-    .flat()
-    .forEach((c) => map.set(c.id, c));
+  for (const color of allColors.value) {
+    map.set(color.id, color);
+  }
   return map;
+});
+
+const fallbackColorId = computed(() => {
+  return selectedColorIds.value[0] ?? allColors.value[0]?.id ?? "";
+});
+
+watch(
+  canvasSize,
+  (next, previous) => {
+    if (!previous) {
+      return;
+    }
+
+    if (next.width === previous.width && next.height === previous.height) {
+      return;
+    }
+
+    if (!pixels.value.length) {
+      pixels.value = createBlankPixels(next, fallbackColorId.value);
+    } else {
+      pixels.value = resizePixels(pixels.value, next, fallbackColorId.value);
+    }
+
+    statusMessage.value = `画布已调整为 ${next.width} × ${next.height}`;
+  },
+  { deep: true },
+);
+
+watch(selectedColorIds, (nextIds) => {
+  if (!nextIds.length && allColors.value.length) {
+    selectedColorIds.value = allColors.value.map((color) => color.id);
+    return;
+  }
+
+  if (!activeColorId.value || !nextIds.includes(activeColorId.value)) {
+    activeColorId.value = nextIds[0] ?? allColors.value[0]?.id ?? null;
+  }
 });
 
 onMounted(async () => {
   try {
     paletteLoading.value = true;
-    const res = await fetch("/palette.json");
-    if (!res.ok) throw new Error("无法加载色板数据");
-    const data: PaletteColorMap = await res.json();
+    const response = await fetch("/palette.json");
+    if (!response.ok) {
+      throw new Error("无法加载色板数据");
+    }
+
+    const data = (await response.json()) as PaletteColorMap;
     palette.value = data;
-    selectedColorIds.value = Object.values(data)
-      .flat()
-      .map((c) => c.id);
-    activeColorId.value = Object.values(data).flat()[0]?.id ?? null;
-    initBlankCanvas();
-  } catch (err) {
-    paletteError.value = err instanceof Error ? err.message : "加载色板失败";
+    selectedColorIds.value = flattenPalette(data).map((color) => color.id);
+    activeColorId.value = flattenPalette(data)[0]?.id ?? null;
+    pixels.value = createBlankPixels(canvasSize.value, fallbackColorId.value);
+    statusMessage.value = `已载入 ${flattenPalette(data).length} 个拼豆色号`;
+  } catch (error) {
+    paletteError.value = error instanceof Error ? error.message : "加载色板失败";
   } finally {
     paletteLoading.value = false;
   }
 });
 
 function initBlankCanvas() {
-  const fallbackColor =
-    selectedColorIds.value[0] ??
-    Object.values(palette.value).flat()[0]?.id ??
-    "";
-  const rows: string[][] = [];
-  const { width, height } = canvasSize.value;
-  for (let y = 0; y < height; y += 1) {
-    const row: string[] = [];
-    for (let x = 0; x < width; x += 1) {
-      row.push(fallbackColor);
-    }
-    rows.push(row);
+  pixels.value = createBlankPixels(canvasSize.value, fallbackColorId.value);
+  sourceImageName.value = "";
+  statusMessage.value = `创建了 ${canvasSize.value.width} × ${canvasSize.value.height} 的空白拼豆画布`;
+}
+
+async function handleImageUpload(file: File) {
+  if (!file) {
+    return;
   }
-  pixels.value = rows;
-  statusMessage.value = `创建了 ${width} x ${height} 的空白画布`;
-}
 
-function hexToRgb(hex: string) {
-  const normalized = hex.replace("#", "");
-  const int = parseInt(normalized, 16);
-  return {
-    r: (int >> 16) & 255,
-    g: (int >> 8) & 255,
-    b: int & 255,
-  };
-}
-
-function colorDistance(a: PaletteColor, r: number, g: number, b: number) {
-  const ca = hexToRgb(a.hex);
-  const dr = ca.r - r;
-  const dg = ca.g - g;
-  const db = ca.b - b;
-  return dr * dr + dg * dg + db * db;
-}
-
-function findNearestColor(r: number, g: number, b: number): string {
-  const candidates = selectedColors.value.length
-    ? selectedColors.value
-    : Object.values(palette.value).flat();
-  if (!candidates.length) return "";
-  let bestId = candidates[0].id;
-  let bestScore = Number.POSITIVE_INFINITY;
-  for (const c of candidates) {
-    const d = colorDistance(c, r, g, b);
-    if (d < bestScore) {
-      bestScore = d;
-      bestId = c.id;
-    }
-  }
-  return bestId;
-}
-
-function handleImageUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  const img = new Image();
-  img.onload = () => {
+  try {
+    processingImage.value = true;
+    paletteError.value = "";
     sourceImageName.value = file.name;
-    quantizeImage(img);
-    URL.revokeObjectURL(img.src);
-  };
-  img.src = URL.createObjectURL(file);
-}
+    statusMessage.value = `正在处理 ${file.name}...`;
 
-function quantizeImage(img: HTMLImageElement) {
-  const { width, height } = canvasSize.value;
-  if (!width || !height) return;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const fileDataUrl = await readFileAsDataUrl(file);
+    const fixedPalette = (selectedColors.value.length ? selectedColors.value : allColors.value).map((color) => {
+      const normalized = color.hex.replace("#", "");
+      const int = Number.parseInt(normalized, 16);
+      return {
+        r: (int >> 16) & 255,
+        g: (int >> 8) & 255,
+        b: int & 255,
+        a: 255,
+      };
+    });
 
-  const rows: string[][] = [];
-  for (let y = 0; y < canvas.height; y += 1) {
-    const row: string[] = [];
-    for (let x = 0; x < canvas.width; x += 1) {
-      const idx = (y * canvas.width + x) * 4;
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      row.push(findNearestColor(r, g, b));
+    const unfakeResult = await runUnfakeEdgeCleanup({
+      enabled: importSettings.value.useUnfake,
+      source: fileDataUrl,
+      maxColors: Math.min(64, fixedPalette.length || 64),
+      fixedPalette,
+    });
+
+    let imageSourceForQuantization = unfakeResult.src;
+    let aiHint = "使用默认量化模式";
+
+    if (importSettings.value.mode === "ai") {
+      const aiPrompt = importSettings.value.prompt.trim() || "保留主体轮廓，强化边缘、简化背景，并适合拼豆像素化制作";
+      try {
+        if (!(await isTauriEnvironment())) {
+          throw new Error("当前不是 Tauri 桌面环境，无法安全调用豆包代理");
+        }
+
+        const edited = await invokeDoubaoImageEdit({
+          apiKey: importSettings.value.doubaoApiKey.trim(),
+          baseUrl: importSettings.value.doubaoBaseUrl.trim(),
+          model: importSettings.value.doubaoModel.trim(),
+          prompt: `${aiPrompt}；风格偏好：${importSettings.value.style}`,
+          imageDataUrl: unfakeResult.src,
+          size: importSettings.value.doubaoSize,
+          guidanceScale: importSettings.value.doubaoGuidanceScale,
+          watermark: true,
+        });
+
+        imageSourceForQuantization = edited.imageDataUrl;
+        aiHint = edited.revisedPrompt
+          ? `豆包 SeedEdit 已优化：${edited.revisedPrompt}`
+          : "豆包 SeedEdit 已返回优化结果";
+      } catch (error) {
+        aiHint = error instanceof Error
+          ? `豆包调用失败，已回退本地增强：${error.message}`
+          : "豆包调用失败，已回退本地增强";
+      }
     }
-    rows.push(row);
+
+    const image = await loadImageFromUrl(imageSourceForQuantization);
+    const paletteForQuantization = selectedColors.value.length
+      ? selectedColors.value
+      : allColors.value;
+
+    pixels.value = renderImageToPixels({
+      image,
+      size: canvasSize.value,
+      palette: paletteForQuantization,
+      mode: importSettings.value.mode,
+      style: importSettings.value.style,
+      prompt: importSettings.value.prompt,
+    });
+
+    statusMessage.value = `${file.name} 已生成 ${canvasSize.value.width} × ${canvasSize.value.height} 图纸；${unfakeResult.message}；${aiHint}`;
+  } catch (error) {
+    paletteError.value = error instanceof Error ? error.message : "图片处理失败";
+    statusMessage.value = "图片处理失败，请重试";
+  } finally {
+    processingImage.value = false;
   }
-  pixels.value = rows;
-  statusMessage.value = `已量化 ${
-    sourceImageName.value || "图片"
-  } 为 ${width} x ${height} 像素画`;
 }
 
-function replaceColorBatch() {
-  if (!replaceFrom.value || !replaceTo.value) return;
-  const next = pixels.value.map((row) =>
-    row.map((cell) => (cell === replaceFrom.value ? replaceTo.value! : cell))
+function paintPixel(rowIndex: number, colIndex: number) {
+  if (!activeColorId.value) {
+    return;
+  }
+
+  const next = pixels.value.map((row, currentRowIndex) =>
+    row.map((cell, currentColIndex) => {
+      if (currentRowIndex !== rowIndex || currentColIndex !== colIndex) {
+        return cell;
+      }
+      return activeColorId.value ?? cell;
+    }),
   );
+
   pixels.value = next;
 }
 
-// 导出已移入 ExportPanel 组件
+function paintPixels(cells: Array<{ row: number; col: number }>) {
+  if (!activeColorId.value || !cells.length) {
+    return;
+  }
+
+  const cellMap = new Set(cells.map(({ row, col }) => `${row}:${col}`));
+  pixels.value = pixels.value.map((row, rowIndex) =>
+    row.map((cell, colIndex) =>
+      cellMap.has(`${rowIndex}:${colIndex}`) ? activeColorId.value ?? cell : cell,
+    ),
+  );
+}
+
+function replaceColorBatch() {
+  if (!replaceFrom.value || !replaceTo.value || replaceFrom.value === replaceTo.value) {
+    return;
+  }
+
+  pixels.value = pixels.value.map((row) =>
+    row.map((cell) => (cell === replaceFrom.value ? replaceTo.value ?? cell : cell)),
+  );
+  statusMessage.value = `已将 ${replaceFrom.value} 批量替换为 ${replaceTo.value}`;
+}
 </script>
 
 <template>
   <div class="page">
-    <!-- 顶部标题区 -->
     <HeaderBar />
 
-    <!-- 色板选择 -->
     <PaletteSelector
       :palette="palette"
       :selected-color-ids="selectedColorIds"
       :active-color-id="activeColorId"
-      @update="(ids) => (selectedColorIds = ids)"
-      @set-active="(id) => (activeColorId = id)"
+      @update="selectedColorIds = $event"
+      @set-active="activeColorId = $event || null"
     />
 
-    <!-- 画布与控制区 - 左右布局 -->
     <div class="canvas-workspace">
-      <!-- 左侧控制区 -->
       <aside class="left-controls">
-        <NewImportControls
+        <ImportControls
+          v-model="importSettings"
           :status-message="statusMessage"
           :palette-error="paletteError"
+          :processing="processingImage || paletteLoading"
+          :source-image-name="sourceImageName"
           @init-blank="initBlankCanvas"
           @upload-image="handleImageUpload"
         />
         <CanvasSizeControls v-model="canvasSize" />
       </aside>
 
-      <!-- 中间画布区 -->
       <div class="canvas-container">
         <CanvasViewer
           v-model="canvasSize"
           :pixels="pixels"
           :palette-map="paletteMap"
           :active-color-id="activeColorId"
-          @pixel-click="(r, c) => {
-            if (!activeColorId) return;
-            const next = pixels.map((row, ri) =>
-              row.map((cell, ci) => (ri === r && ci === c ? activeColorId! : cell))
-            );
-            pixels = next;
-          }"
+          @pixel-click="paintPixel"
+          @paint-cells="paintPixels"
         />
       </div>
 
-      <!-- 右侧控制区 -->
       <aside class="right-controls">
         <BatchReplaceControls
           :palette="palette"
@@ -257,61 +311,55 @@ function replaceColorBatch() {
           v-model="canvasSize"
           :pixels="pixels"
           :palette-map="paletteMap"
+          :source-image-name="sourceImageName"
         />
       </aside>
     </div>
   </div>
 </template>
+
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap");
 
 :root {
   font-family: "Spline Sans Mono", "Segoe UI", sans-serif;
-  background: linear-gradient(
-      90deg,
-      rgba(96, 165, 250, 0.08) 1px,
-      transparent 1px
-    ),
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08) 1px, transparent 1px),
     linear-gradient(rgba(96, 165, 250, 0.08) 1px, transparent 1px),
-    radial-gradient(
-      circle at 50% 0%,
-      #1e3a8a 0%,
-      #1e40af 10%,
-      #1e3a8a 20%,
-      transparent 35%
-    ),
+    radial-gradient(circle at 50% 0%, #1e3a8a 0%, #1e40af 10%, #1e3a8a 20%, transparent 35%),
     #0f172a;
   background-size: 20px 20px, 20px 20px, 100% 100%, 100% 100%;
-  background-position: 0 0, 0 0, 0 0, 0 0;
   color: #e2e8f0;
 }
-*{
+
+* {
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
 }
 </style>
 
 <style scoped>
 .page {
-  width: 90vw;
+  width: min(1440px, 96vw);
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 32px 20px 48px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 24px;
 }
 
-/* 画布工作区 - 左中右布局 */
 .canvas-workspace {
   width: 100%;
   display: flex;
   gap: 20px;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .left-controls,
 .right-controls {
-  width: 280px;
+  width: 320px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -320,202 +368,19 @@ function replaceColorBatch() {
 }
 
 .canvas-container {
-  flex: 1;
-  width: 100%;
-  display: block;
-  min-height: 400px;
-}
-
-.control-group {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.section-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: #e2e8f0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.button-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.button-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.form-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.form-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  flex: 1;
   min-width: 0;
+  flex: 1;
 }
 
-.form-row label {
-  min-width: 120px;
-}
+@media (max-width: 1200px) {
+  .canvas-workspace {
+    flex-direction: column;
+  }
 
-input[type="number"],
-select {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 10px;
-  color: #e2e8f0;
-  font-size: 14px;
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-button {
-  cursor: pointer;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  padding: 10px 16px;
-  font-weight: 700;
-  font-size: 14px;
-  transition: all 120ms ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-
-.btn-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.primary {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
-  border: none;
-}
-
-.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-}
-
-.primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* 上传按钮样式 */
-.upload-btn {
-  cursor: pointer;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  padding: 10px 16px;
-  font-weight: 700;
-  font-size: 14px;
-  transition: all 120ms ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.upload-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.upload-btn input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-}
-
-.chip-display {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-  font-weight: 600;
-  font-size: 14px;
-  justify-content: center;
-}
-
-.note {
-  margin: 0;
-  color: #94a3b8;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.status {
-  color: #67e8f9;
-  margin: 0;
-  font-size: 13px;
-  padding: 8px 12px;
-  background: rgba(103, 232, 249, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #67e8f9;
-}
-
-.error {
-  color: #fca5a5;
-  margin: 0;
-  font-size: 13px;
-  padding: 8px 12px;
-  background: rgba(252, 165, 165, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #fca5a5;
+  .left-controls,
+  .right-controls {
+    width: 100%;
+    position: static;
+  }
 }
 </style>

@@ -8,17 +8,17 @@ const model = defineModel<{ width: number; height: number }>({
 const tempWidth = ref(model.value.width);
 const tempHeight = ref(model.value.height);
 
-function onWidthInput(e: Event) {
-  let v = Number((e.target as HTMLInputElement).value);
-  if (!isNaN(v)) {
-    tempWidth.value = Math.max(1, Math.min(200, Math.floor(v)));
+function onWidthInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isNaN(value)) {
+    tempWidth.value = Math.max(1, Math.min(200, Math.floor(value)));
   }
 }
 
-function onHeightInput(e: Event) {
-  let v = Number((e.target as HTMLInputElement).value);
-  if (!isNaN(v)) {
-    tempHeight.value = Math.max(1, Math.min(200, Math.floor(v)));
+function onHeightInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isNaN(value)) {
+    tempHeight.value = Math.max(1, Math.min(200, Math.floor(value)));
   }
 }
 
@@ -37,7 +37,7 @@ watch(
     tempWidth.value = next.width;
     tempHeight.value = next.height;
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 
@@ -46,33 +46,19 @@ watch(
     <div class="section-title">画布尺寸</div>
     <div class="form-col">
       <label>
-        宽度
-        <input
-          type="number"
-          min="1"
-          max="200"
-          step="1"
-          :value="tempWidth"
-          @input="onWidthInput"
-        />
+        横向像素
+        <input type="number" min="1" max="200" step="1" :value="tempWidth" @input="onWidthInput" />
       </label>
       <label>
-        高度
-        <input
-          type="number"
-          min="1"
-          max="200"
-          step="1"
-          :value="tempHeight"
-          @input="onHeightInput"
-        />
+        纵向像素
+        <input type="number" min="1" max="200" step="1" :value="tempHeight" @input="onHeightInput" />
       </label>
     </div>
     <div class="button-row">
       <button class="primary" @click="applyChanges">应用尺寸</button>
       <button class="ghost" @click="resetChanges">重置</button>
     </div>
-    <p class="note">修改后点击"应用尺寸"将重置画布为空白</p>
+    <p class="note">尺寸变更后会尽量保留已有画面，新增区域用当前首个色板色填充。</p>
   </div>
 </template>
 
@@ -139,21 +125,11 @@ button {
   font-weight: 700;
   font-size: 14px;
   transition: all 120ms ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
 }
 
 .primary {
   background: linear-gradient(135deg, #0ea5e9, #22d3ee);
   color: #0b1021;
-  border: none;
-}
-
-.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
 }
 
 .ghost {
@@ -162,20 +138,10 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .note {
   margin: 0;
   color: #94a3b8;
   font-size: 12px;
   line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .button-row {
-    flex-direction: column;
-  }
 }
 </style>

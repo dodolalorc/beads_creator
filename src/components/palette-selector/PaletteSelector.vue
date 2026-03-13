@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import ColorEditorModal from "@/components/color-editor/ColorEditor.vue";
+import ColorEditorModal from "../color-editor/ColorEditor.vue";
 
 type PaletteColor = {
   id: string;
