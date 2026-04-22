@@ -18,7 +18,6 @@ import {
   type PaletteColor,
   type PaletteColorMap,
 } from "./lib/pixel-art";
-import { runUnfakeEdgeCleanup } from "./lib/unfake";
 import { invokeDoubaoImageEdit, isTauriEnvironment } from "./lib/doubao";
 
 const palette = ref<PaletteColorMap>({
@@ -54,7 +53,6 @@ const importSettings = ref<ImportSettings>({
   doubaoBaseUrl: DEFAULT_DOUBAO_BASE_URL,
   doubaoGuidanceScale: 5.5,
   doubaoSize: "adaptive",
-  useUnfake: true,
 });
 
 const allColors = computed(() => flattenPalette(palette.value));
@@ -148,25 +146,7 @@ async function handleImageUpload(file: File) {
     statusMessage.value = `正在处理 ${file.name}...`;
 
     const fileDataUrl = await readFileAsDataUrl(file);
-    const fixedPalette = (selectedColors.value.length ? selectedColors.value : allColors.value).map((color) => {
-      const normalized = color.hex.replace("#", "");
-      const int = Number.parseInt(normalized, 16);
-      return {
-        r: (int >> 16) & 255,
-        g: (int >> 8) & 255,
-        b: int & 255,
-        a: 255,
-      };
-    });
-
-    const unfakeResult = await runUnfakeEdgeCleanup({
-      enabled: importSettings.value.useUnfake,
-      source: fileDataUrl,
-      maxColors: Math.min(64, fixedPalette.length || 64),
-      fixedPalette,
-    });
-
-    let imageSourceForQuantization = unfakeResult.src;
+    let imageSourceForQuantization = fileDataUrl;
     let aiHint = "使用默认量化模式";
 
     if (importSettings.value.mode === "ai") {
@@ -181,7 +161,7 @@ async function handleImageUpload(file: File) {
           baseUrl: importSettings.value.doubaoBaseUrl.trim(),
           model: importSettings.value.doubaoModel.trim(),
           prompt: `${aiPrompt}；风格偏好：${importSettings.value.style}`,
-          imageDataUrl: unfakeResult.src,
+          imageDataUrl: fileDataUrl,
           size: importSettings.value.doubaoSize,
           guidanceScale: importSettings.value.doubaoGuidanceScale,
           watermark: true,
@@ -212,7 +192,7 @@ async function handleImageUpload(file: File) {
       prompt: importSettings.value.prompt,
     });
 
-    statusMessage.value = `${file.name} 已生成 ${canvasSize.value.width} × ${canvasSize.value.height} 图纸；${unfakeResult.message}；${aiHint}`;
+    statusMessage.value = `${file.name} 已生成 ${canvasSize.value.width} × ${canvasSize.value.height} 图纸；${aiHint}`;
   } catch (error) {
     paletteError.value = error instanceof Error ? error.message : "图片处理失败";
     statusMessage.value = "图片处理失败，请重试";
@@ -319,24 +299,72 @@ function replaceColorBatch() {
 </template>
 
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap");
-
 :root {
-  font-family: "Spline Sans Mono", "Segoe UI", sans-serif;
-  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(96, 165, 250, 0.08) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, #1e3a8a 0%, #1e40af 10%, #1e3a8a 20%, transparent 35%),
-    #0f172a;
-  background-size: 20px 20px, 20px 20px, 100% 100%, 100% 100%;
-  color: #e2e8f0;
+  font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  color: #43352a;
+  background:
+    radial-gradient(circle at top left, rgba(214, 193, 160, 0.35), transparent 34%),
+    radial-gradient(circle at right 18%, rgba(201, 175, 131, 0.16), transparent 22%),
+    linear-gradient(180deg, rgba(255, 252, 244, 0.94), rgba(244, 236, 221, 0.96)),
+    #efe4cf;
+  --paper-bg: rgba(255, 250, 241, 0.82);
+  --paper-bg-strong: rgba(252, 247, 238, 0.96);
+  --paper-bg-soft: rgba(245, 236, 220, 0.78);
+  --paper-line: rgba(126, 98, 67, 0.16);
+  --paper-line-strong: rgba(126, 98, 67, 0.28);
+  --paper-shadow: 0 18px 50px rgba(92, 69, 43, 0.12);
+  --paper-shadow-soft: 0 10px 24px rgba(92, 69, 43, 0.08);
+  --paper-text: #43352a;
+  --paper-text-muted: #6f5a46;
+  --paper-text-soft: #8c7763;
+  --paper-accent: #9d6d3c;
+  --paper-accent-strong: #7d5430;
+  --paper-accent-soft: #e4d1b5;
+  --paper-button-text: #fffaf0;
+  --paper-overlay: rgba(68, 50, 31, 0.34);
+  --paper-scrollbar: rgba(140, 119, 99, 0.35);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  background: #efe4cf;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
+  color: var(--paper-text);
+  background:
+    linear-gradient(rgba(146, 118, 84, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(146, 118, 84, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 250, 241, 0.86), rgba(239, 228, 207, 0.92));
+  background-size: 100% 32px, 32px 100%, 100% 100%;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.38), transparent 18%),
+    radial-gradient(circle at 82% 12%, rgba(186, 149, 100, 0.12), transparent 16%);
+  opacity: 0.9;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
 }
 </style>
 

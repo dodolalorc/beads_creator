@@ -284,24 +284,26 @@ function downloadPng() {
 
 <style scoped>
 .panel {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
+  background: var(--paper-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: var(--paper-shadow-soft);
+  backdrop-filter: blur(6px);
 }
 
 .panel-title {
   font-weight: 700;
   font-size: 16px;
-  color: #e2e8f0;
+  color: var(--paper-text);
 }
 
 .note {
   margin: 0;
-  color: #94a3b8;
+  color: var(--paper-text-muted);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -323,8 +325,8 @@ button {
 }
 
 .primary {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
 }
 
 .primary:hover,
@@ -333,8 +335,8 @@ button {
 }
 
 .ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
+  border: 1px solid var(--paper-line);
 }
 </style>

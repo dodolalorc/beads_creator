@@ -32,7 +32,6 @@ export type ImportSettings = {
   doubaoBaseUrl: string;
   doubaoGuidanceScale: number;
   doubaoSize: string;
-  useUnfake: boolean;
 };
 
 export const DEFAULT_DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";

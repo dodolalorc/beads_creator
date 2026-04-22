@@ -108,19 +108,21 @@ function selectToColor(colorId: string) {
 </template>
 <style scoped>
 .control-group {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
+  background: var(--paper-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: var(--paper-shadow-soft);
+  backdrop-filter: blur(6px);
 }
 
 .section-title {
   font-weight: 700;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-accent-strong);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -137,7 +139,7 @@ label {
   gap: 6px;
   font-weight: 600;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-text);
   flex: 1;
 }
 
@@ -147,11 +149,11 @@ label {
 }
 
 .select-display {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background: var(--paper-bg-strong);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   padding: 10px 12px;
-  color: #e2e8f0;
+  color: var(--paper-text);
   font-size: 14px;
   display: flex;
   align-items: center;
@@ -160,8 +162,8 @@ label {
 }
 
 .custom-select:hover .select-display {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--paper-bg-soft);
+  border-color: var(--paper-line-strong);
 }
 
 .select-text {
@@ -172,7 +174,7 @@ label {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 250, 240, 0.78);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
@@ -182,13 +184,13 @@ label {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background: rgba(255, 248, 239, 0.98);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   max-height: 240px;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--paper-shadow-soft);
 }
 
 .dropdown-item {
@@ -198,17 +200,17 @@ label {
   gap: 10px;
   cursor: pointer;
   transition: all 120ms ease;
-  color: #e2e8f0;
+  color: var(--paper-text);
   font-size: 14px;
 }
 
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-soft);
 }
 
 .dropdown-item.active {
-  background: rgba(14, 165, 233, 0.15);
-  color: #67e8f9;
+  background: rgba(157, 109, 60, 0.1);
+  color: var(--paper-accent-strong);
 }
 
 .dropdown-menu::-webkit-scrollbar {
@@ -216,17 +218,17 @@ label {
 }
 
 .dropdown-menu::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(233, 221, 202, 0.32);
   border-radius: 3px;
 }
 
 .dropdown-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--paper-scrollbar);
   border-radius: 3px;
 }
 
 .dropdown-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(140, 119, 99, 0.52);
 }
 
 select {
@@ -266,14 +268,14 @@ button {
 }
 
 .primary {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
   border: none;
 }
 
 .primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 10px 20px rgba(125, 84, 48, 0.18);
 }
 
 .primary:disabled {

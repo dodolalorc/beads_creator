@@ -71,11 +71,6 @@ function handleFileChange(event: Event) {
         ></textarea>
       </label>
 
-      <label class="switch-row">
-        <input v-model="model.useUnfake" type="checkbox" />
-        <span>启用 `unfake.js` 边缘清洗</span>
-      </label>
-
       <label>
         豆包 Token
         <input v-model="model.doubaoApiKey" type="password" placeholder="桌面端可留空，改用 ARK_API_KEY 环境变量" />
@@ -107,7 +102,7 @@ function handleFileChange(event: Event) {
     </div>
 
     <p v-if="sourceImageName" class="note">当前源图：{{ sourceImageName }}</p>
-    <p class="note">默认模式做像素采样 + 固定色板映射；AI 辅助优先走 Tauri 桌面端的豆包 SeedEdit，失败时自动回退到本地风格增强。</p>
+    <p class="note">默认模式直接做像素采样和固定色板映射；AI 辅助优先走 Tauri 桌面端的豆包 SeedEdit，失败时自动回退到本地风格增强。</p>
     <p v-if="props.statusMessage" class="status">{{ props.statusMessage }}</p>
     <p v-if="props.paletteError" class="error">{{ props.paletteError }}</p>
   </div>
@@ -115,21 +110,23 @@ function handleFileChange(event: Event) {
 
 <style scoped>
 .control-group {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
+  background: var(--paper-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  box-shadow: var(--paper-shadow-soft);
+  backdrop-filter: blur(6px);
 }
 
 .section-title {
   font-weight: 700;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-accent-strong);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .button-col,
@@ -145,19 +142,20 @@ label {
   gap: 6px;
   font-weight: 600;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-text);
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background: var(--paper-bg-strong);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   padding: 10px;
-  color: #e2e8f0;
+  color: var(--paper-text);
   font-size: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 textarea {
@@ -168,13 +166,13 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  border-color: var(--paper-accent);
+  box-shadow: 0 0 0 3px rgba(157, 109, 60, 0.12);
 }
 
 .primary {
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   padding: 10px 16px;
   font-weight: 700;
@@ -184,14 +182,15 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   justify-content: center;
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
+  box-shadow: 0 10px 20px rgba(125, 84, 48, 0.18);
 }
 
 .primary:hover:not(:disabled),
 .upload-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 14px 28px rgba(125, 84, 48, 0.18);
 }
 
 .primary:disabled,
@@ -207,10 +206,10 @@ textarea:focus {
 
 .upload-btn {
   cursor: pointer;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
+  border-radius: 12px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
   padding: 10px 16px;
   font-weight: 700;
   font-size: 14px;
@@ -230,39 +229,30 @@ textarea:focus {
   cursor: pointer;
 }
 
-.switch-row {
-  flex-direction: row;
-  align-items: center;
-}
-
-.switch-row input {
-  width: auto;
-}
-
 .note {
   margin: 0;
-  color: #94a3b8;
+  color: var(--paper-text-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .status {
-  color: #67e8f9;
+  color: var(--paper-accent-strong);
   margin: 0;
   font-size: 13px;
   padding: 8px 12px;
-  background: rgba(103, 232, 249, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #67e8f9;
+  background: rgba(184, 135, 87, 0.12);
+  border-radius: 10px;
+  border-left: 3px solid var(--paper-accent);
 }
 
 .error {
-  color: #fca5a5;
+  color: #b24f42;
   margin: 0;
   font-size: 13px;
   padding: 8px 12px;
-  background: rgba(252, 165, 165, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid #fca5a5;
+  background: rgba(178, 79, 66, 0.08);
+  border-radius: 10px;
+  border-left: 3px solid #b24f42;
 }
 </style>

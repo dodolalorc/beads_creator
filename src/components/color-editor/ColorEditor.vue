@@ -157,7 +157,7 @@ function confirm() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--paper-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,16 +165,16 @@ function confirm() {
 }
 
 .modal {
-  background: #0f1419;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 250, 241, 0.98), rgba(244, 233, 214, 0.96));
+  border: 1px solid var(--paper-line);
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   max-width: 600px;
   width: 90vw;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--paper-shadow);
 }
 
 .modal-header {
@@ -182,19 +182,19 @@ function confirm() {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--paper-line);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #e2e8f0;
+  color: var(--paper-text);
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--paper-text-soft);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -206,7 +206,7 @@ function confirm() {
 }
 
 .close-btn:hover {
-  color: #e2e8f0;
+  color: var(--paper-text);
 }
 
 .modal-body {
@@ -227,7 +227,7 @@ function confirm() {
 
 .section-title {
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--paper-text);
   font-size: 14px;
 }
 
@@ -237,9 +237,9 @@ function confirm() {
 }
 
 .ghost-small {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
+  border: 1px solid var(--paper-line);
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -248,7 +248,7 @@ function confirm() {
 }
 
 .ghost-small:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--paper-bg-soft);
 }
 
 .series-list {
@@ -263,13 +263,13 @@ function confirm() {
   gap: 8px;
   padding: 8px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(233, 221, 202, 0.45);
   cursor: pointer;
   transition: background 120ms ease;
 }
 
 .series-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(228, 209, 181, 0.64);
 }
 
 .series-item input {
@@ -279,7 +279,7 @@ function confirm() {
 }
 
 .series-name {
-  color: #cbd5e1;
+  color: var(--paper-text-muted);
 }
 
 .colors-grid {
@@ -292,7 +292,7 @@ function confirm() {
   position: relative;
   aspect-ratio: 1;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(126, 98, 67, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,8 +310,8 @@ function confirm() {
 }
 
 .color-item:has(input:checked) {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+  border-color: var(--paper-accent);
+  box-shadow: 0 0 0 3px rgba(157, 109, 60, 0.14);
 }
 
 .color-label {
@@ -319,8 +319,8 @@ function confirm() {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.5);
-  color: #f8fafc;
+  background: rgba(67, 53, 42, 0.58);
+  color: #fffaf0;
   padding: 4px;
   font-size: 11px;
   text-align: center;
@@ -329,10 +329,10 @@ function confirm() {
 
 .stats {
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--paper-bg-soft);
   border-radius: 8px;
   font-size: 12px;
-  color: #cbd5e1;
+  color: var(--paper-text-muted);
   text-align: center;
 }
 
@@ -340,7 +340,7 @@ function confirm() {
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--paper-line);
   justify-content: flex-end;
 }
 
@@ -354,22 +354,22 @@ button {
 }
 
 .primary {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
 }
 
 .ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
+  border: 1px solid var(--paper-line);
 }
 
 .ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--paper-bg-soft);
 }
 
 /* 美化 checkbox */
 input[type="checkbox"] {
-  accent-color: #0ea5e9;
+  accent-color: var(--paper-accent);
 }
 </style>

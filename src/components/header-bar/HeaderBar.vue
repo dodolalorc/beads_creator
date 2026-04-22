@@ -16,43 +16,53 @@
 <style scoped>
 .hero {
   width: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.03)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 16px 60px rgba(15, 23, 42, 0.6);
+  background: linear-gradient(135deg, rgba(255, 252, 245, 0.94), rgba(244, 233, 214, 0.9));
+  border: 1px solid var(--paper-line);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--paper-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 24px 20px auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 135, 87, 0.18), transparent 70%);
+  pointer-events: none;
 }
 
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 12px;
-  color: #7dd3fc;
+  color: var(--paper-accent);
   margin-bottom: 6px;
 }
 
 h1 {
   margin: 0 0 8px;
-  font-size: 28px;
-  color: #e2e8f0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--paper-text);
 }
 
 .lede {
   margin: 0;
-  color: #cbd5e1;
+  color: var(--paper-text-muted);
   max-width: 100%;
   line-height: 1.6;
 }
 
 .star-tip {
   margin-top: 12px;
-  color: #fbbf24;
+  color: var(--paper-accent-strong);
   font-size: 15px;
   font-weight: 500;
 }
-
 </style>

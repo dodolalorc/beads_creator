@@ -133,13 +133,15 @@ function handleModalConfirm(selectedIds: string[]) {
 <style scoped>
 .palette-panel {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: var(--paper-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: var(--paper-shadow-soft);
+  backdrop-filter: blur(6px);
 }
 
 .palette-header {
@@ -158,18 +160,18 @@ function handleModalConfirm(selectedIds: string[]) {
 .panel-title {
   font-weight: 700;
   font-size: 16px;
-  color: #e2e8f0;
+  color: var(--paper-text);
   margin-bottom: 4px;
 }
 
 .note {
   margin: 0;
-  color: #94a3b8;
+  color: var(--paper-text-muted);
   font-size: 13px;
 }
 
 .expand-hint {
-  color: #7dd3fc;
+  color: var(--paper-accent);
   font-weight: 600;
 }
 
@@ -186,14 +188,14 @@ function handleModalConfirm(selectedIds: string[]) {
   gap: 6px;
   margin-right: 8px;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: var(--paper-bg-strong);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
 }
 
 .brush-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--paper-text-soft);
   font-weight: 600;
 }
 
@@ -203,7 +205,7 @@ function handleModalConfirm(selectedIds: string[]) {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  color: #e2e8f0;
+  color: #fffaf0;
   font-weight: 600;
   font-size: 12px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -240,7 +242,7 @@ function handleModalConfirm(selectedIds: string[]) {
 
 .swatch:hover {
   transform: translateY(-2px);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 8px 20px rgba(92, 69, 43, 0.2);
 }
 
 .swatch input {
@@ -265,8 +267,8 @@ function handleModalConfirm(selectedIds: string[]) {
 .expand-card,
 .collapse-card {
   aspect-ratio: 1;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
+  border: 2px dashed var(--paper-line-strong);
+  background: var(--paper-bg-soft);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -278,14 +280,14 @@ function handleModalConfirm(selectedIds: string[]) {
 
 .expand-card:hover,
 .collapse-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--paper-bg-strong);
+  border-color: var(--paper-accent);
   transform: translateY(-2px);
 }
 
 .expand-icon {
   font-size: 20px;
-  color: #7dd3fc;
+  color: var(--paper-accent);
 }
 
 /* 按钮样式 */
@@ -298,8 +300,8 @@ button {
 }
 
 .primary-small {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
   border: none;
   padding: 8px 14px;
   font-size: 13px;
@@ -307,19 +309,19 @@ button {
 
 .primary-small:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 10px 20px rgba(125, 84, 48, 0.18);
 }
 
 .ghost-small {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
+  border: 1px solid var(--paper-line);
   padding: 8px 14px;
   font-size: 13px;
 }
 
 .ghost-small:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--paper-bg-soft);
 }
 
 @media (max-width: 720px) {

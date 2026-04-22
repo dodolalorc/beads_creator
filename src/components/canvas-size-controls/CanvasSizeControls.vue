@@ -64,19 +64,21 @@ watch(
 
 <style scoped>
 .control-group {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
+  background: var(--paper-bg);
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: var(--paper-shadow-soft);
+  backdrop-filter: blur(6px);
 }
 
 .section-title {
   font-weight: 700;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-accent-strong);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -93,22 +95,22 @@ label {
   gap: 6px;
   font-weight: 600;
   font-size: 14px;
-  color: #e2e8f0;
+  color: var(--paper-text);
 }
 
 input[type="number"] {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background: var(--paper-bg-strong);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   padding: 10px;
-  color: #e2e8f0;
+  color: var(--paper-text);
   font-size: 14px;
 }
 
 input[type="number"]:focus {
   outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  border-color: var(--paper-accent);
+  box-shadow: 0 0 0 3px rgba(157, 109, 60, 0.12);
 }
 
 .button-row {
@@ -119,7 +121,7 @@ input[type="number"]:focus {
 
 button {
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid transparent;
   padding: 10px 16px;
   font-weight: 700;
@@ -128,19 +130,19 @@ button {
 }
 
 .primary {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  color: #0b1021;
+  background: linear-gradient(135deg, #b88757, #93633d);
+  color: var(--paper-button-text);
 }
 
 .ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--paper-bg-strong);
+  color: var(--paper-text);
+  border: 1px solid var(--paper-line);
 }
 
 .note {
   margin: 0;
-  color: #94a3b8;
+  color: var(--paper-text-muted);
   font-size: 12px;
   line-height: 1.5;
 }
