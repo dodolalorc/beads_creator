@@ -21,21 +21,6 @@ export type CanvasSize = {
   height: number;
 };
 
-export type ImportMode = "default" | "ai";
-
-export type ImportSettings = {
-  mode: ImportMode;
-  style: string;
-  prompt: string;
-  doubaoApiKey: string;
-  doubaoModel: string;
-  doubaoBaseUrl: string;
-  doubaoGuidanceScale: number;
-  doubaoSize: string;
-};
-
-export const DEFAULT_DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
-
 export function flattenPalette(palette: PaletteColorMap): PaletteColor[] {
   return Object.values(palette).flat();
 }
@@ -125,66 +110,12 @@ export function readFileAsDataUrl(file: File) {
   });
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-export function applyStyleEnhancement(
-  source: ImageData,
-  style: string,
-  prompt: string,
-) {
-  const data = new Uint8ClampedArray(source.data);
-  const promptBias = prompt.trim().length ? Math.min(0.18, prompt.trim().length / 300) : 0;
-
-  let saturation = 1;
-  let contrast = 1;
-  let brightness = 0;
-
-  if (style === "anime") {
-    saturation = 1.28 + promptBias;
-    contrast = 1.08 + promptBias / 2;
-  } else if (style === "retro") {
-    saturation = 0.94;
-    contrast = 1.22 + promptBias / 2;
-    brightness = -4;
-  } else if (style === "soft") {
-    saturation = 0.88;
-    contrast = 0.96;
-    brightness = 10;
-  } else if (style === "bead-contrast") {
-    saturation = 1.1;
-    contrast = 1.35 + promptBias;
-    brightness = 2;
-  }
-
-  for (let index = 0; index < data.length; index += 4) {
-    const r = data[index];
-    const g = data[index + 1];
-    const b = data[index + 2];
-
-    const avg = (r + g + b) / 3;
-    const nextR = clamp((r - avg) * saturation + avg, 0, 255);
-    const nextG = clamp((g - avg) * saturation + avg, 0, 255);
-    const nextB = clamp((b - avg) * saturation + avg, 0, 255);
-
-    data[index] = clamp((nextR - 128) * contrast + 128 + brightness, 0, 255);
-    data[index + 1] = clamp((nextG - 128) * contrast + 128 + brightness, 0, 255);
-    data[index + 2] = clamp((nextB - 128) * contrast + 128 + brightness, 0, 255);
-  }
-
-  return new ImageData(data, source.width, source.height);
-}
-
 export function renderImageToPixels(options: {
   image: HTMLImageElement;
   size: CanvasSize;
   palette: PaletteColor[];
-  mode: ImportMode;
-  style: string;
-  prompt: string;
 }) {
-  const { image, size, palette, mode, style, prompt } = options;
+  const { image, size, palette } = options;
   const canvas = document.createElement("canvas");
   canvas.width = size.width;
   canvas.height = size.height;
@@ -194,14 +125,11 @@ export function renderImageToPixels(options: {
     throw new Error("浏览器不支持像素处理");
   }
 
-  context.imageSmoothingEnabled = mode === "ai";
+  context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, size.width, size.height);
   context.drawImage(image, 0, 0, size.width, size.height);
 
-  let imageData = context.getImageData(0, 0, size.width, size.height);
-  if (mode === "ai") {
-    imageData = applyStyleEnhancement(imageData, style, prompt);
-  }
+  const imageData = context.getImageData(0, 0, size.width, size.height);
 
   const rows: string[][] = [];
   for (let y = 0; y < size.height; y += 1) {

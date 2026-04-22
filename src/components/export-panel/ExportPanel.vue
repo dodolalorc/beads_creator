@@ -273,7 +273,7 @@ function downloadPng() {
 <template>
   <div class="panel">
     <div class="panel-title">导出图纸</div>
-    <p class="note">PNG 导出带坐标、色号和颜色统计；CSV 便于表格整理；JSON 便于后续再次导入或接 AI。</p>
+  <p class="note">PNG 导出带坐标、色号和颜色统计；CSV 便于表格整理；JSON 便于后续再次导入继续编辑。</p>
     <div class="export-actions">
       <button class="primary" @click="downloadPng">🖼️ 导出 PNG</button>
       <button class="ghost" @click="downloadCsv">📊 导出 CSV</button>

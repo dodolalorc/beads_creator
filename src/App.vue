@@ -8,17 +8,15 @@ import CanvasSizeControls from "./components/canvas-size-controls/CanvasSizeCont
 import BatchReplaceControls from "./components/batch-replace-controls/BatchReplaceControls.vue";
 import ExportPanel from "./components/export-panel/ExportPanel.vue";
 import {
-  DEFAULT_DOUBAO_BASE_URL,  createBlankPixels,
+  createBlankPixels,
   flattenPalette,
   loadImageFromUrl,
   readFileAsDataUrl,
   renderImageToPixels,
   resizePixels,
-  type ImportSettings,
   type PaletteColor,
   type PaletteColorMap,
 } from "./lib/pixel-art";
-import { invokeDoubaoImageEdit, isTauriEnvironment } from "./lib/doubao";
 
 const palette = ref<PaletteColorMap>({
   A: [],
@@ -43,17 +41,6 @@ const sourceImageName = ref("");
 const replaceFrom = ref<string | null>(null);
 const replaceTo = ref<string | null>(null);
 const statusMessage = ref("准备好制作拼豆图纸");
-
-const importSettings = ref<ImportSettings>({
-  mode: "default",
-  style: "bead-contrast",
-  prompt: "",
-  doubaoApiKey: "",
-  doubaoModel: "doubao-seededit-3-0-i2i-250628",
-  doubaoBaseUrl: DEFAULT_DOUBAO_BASE_URL,
-  doubaoGuidanceScale: 5.5,
-  doubaoSize: "adaptive",
-});
 
 const allColors = computed(() => flattenPalette(palette.value));
 
@@ -120,7 +107,7 @@ onMounted(async () => {
     selectedColorIds.value = flattenPalette(data).map((color) => color.id);
     activeColorId.value = flattenPalette(data)[0]?.id ?? null;
     pixels.value = createBlankPixels(canvasSize.value, fallbackColorId.value);
-    statusMessage.value = `已载入 ${flattenPalette(data).length} 个拼豆色号`;
+    statusMessage.value = `已加载 ${flattenPalette(data).length} 个拼豆色号`;
   } catch (error) {
     paletteError.value = error instanceof Error ? error.message : "加载色板失败";
   } finally {
@@ -131,7 +118,7 @@ onMounted(async () => {
 function initBlankCanvas() {
   pixels.value = createBlankPixels(canvasSize.value, fallbackColorId.value);
   sourceImageName.value = "";
-  statusMessage.value = `创建了 ${canvasSize.value.width} × ${canvasSize.value.height} 的空白拼豆画布`;
+  statusMessage.value = `已创建 ${canvasSize.value.width} × ${canvasSize.value.height} 的空白画布`;
 }
 
 async function handleImageUpload(file: File) {
@@ -146,39 +133,7 @@ async function handleImageUpload(file: File) {
     statusMessage.value = `正在处理 ${file.name}...`;
 
     const fileDataUrl = await readFileAsDataUrl(file);
-    let imageSourceForQuantization = fileDataUrl;
-    let aiHint = "使用默认量化模式";
-
-    if (importSettings.value.mode === "ai") {
-      const aiPrompt = importSettings.value.prompt.trim() || "保留主体轮廓，强化边缘、简化背景，并适合拼豆像素化制作";
-      try {
-        if (!(await isTauriEnvironment())) {
-          throw new Error("当前不是 Tauri 桌面环境，无法安全调用豆包代理");
-        }
-
-        const edited = await invokeDoubaoImageEdit({
-          apiKey: importSettings.value.doubaoApiKey.trim(),
-          baseUrl: importSettings.value.doubaoBaseUrl.trim(),
-          model: importSettings.value.doubaoModel.trim(),
-          prompt: `${aiPrompt}；风格偏好：${importSettings.value.style}`,
-          imageDataUrl: fileDataUrl,
-          size: importSettings.value.doubaoSize,
-          guidanceScale: importSettings.value.doubaoGuidanceScale,
-          watermark: true,
-        });
-
-        imageSourceForQuantization = edited.imageDataUrl;
-        aiHint = edited.revisedPrompt
-          ? `豆包 SeedEdit 已优化：${edited.revisedPrompt}`
-          : "豆包 SeedEdit 已返回优化结果";
-      } catch (error) {
-        aiHint = error instanceof Error
-          ? `豆包调用失败，已回退本地增强：${error.message}`
-          : "豆包调用失败，已回退本地增强";
-      }
-    }
-
-    const image = await loadImageFromUrl(imageSourceForQuantization);
+    const image = await loadImageFromUrl(fileDataUrl);
     const paletteForQuantization = selectedColors.value.length
       ? selectedColors.value
       : allColors.value;
@@ -187,12 +142,9 @@ async function handleImageUpload(file: File) {
       image,
       size: canvasSize.value,
       palette: paletteForQuantization,
-      mode: importSettings.value.mode,
-      style: importSettings.value.style,
-      prompt: importSettings.value.prompt,
     });
 
-    statusMessage.value = `${file.name} 已生成 ${canvasSize.value.width} × ${canvasSize.value.height} 图纸；${aiHint}`;
+    statusMessage.value = `${file.name} 已生成 ${canvasSize.value.width} × ${canvasSize.value.height} 图纸`;
   } catch (error) {
     paletteError.value = error instanceof Error ? error.message : "图片处理失败";
     statusMessage.value = "图片处理失败，请重试";
@@ -258,7 +210,6 @@ function replaceColorBatch() {
     <div class="canvas-workspace">
       <aside class="left-controls">
         <ImportControls
-          v-model="importSettings"
           :status-message="statusMessage"
           :palette-error="paletteError"
           :processing="processingImage || paletteLoading"
