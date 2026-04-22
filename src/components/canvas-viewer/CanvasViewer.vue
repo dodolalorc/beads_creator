@@ -132,13 +132,14 @@ function finishPaint() {
 <style scoped>
 .canvas-section {
   width: 100%;
+  min-width: 0;
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--paper-shadow);
   backdrop-filter: blur(6px);
 }
@@ -146,7 +147,7 @@ function finishPaint() {
 .canvas-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .eyebrow {
@@ -160,7 +161,7 @@ function finishPaint() {
 h2 {
   margin: 0 0 8px;
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  font-size: 26px;
+  font-size: 24px;
   color: var(--paper-text);
 }
 
@@ -182,15 +183,16 @@ h2 {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 7px;
   border: 1px solid var(--paper-line);
   background: var(--paper-bg-strong);
   border-radius: 12px;
+  min-width: 0;
 }
 
 .usage.collapsed {
-  max-height: 52px;
+  max-height: 46px;
   overflow: hidden;
 }
 
@@ -198,12 +200,12 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   border-radius: 999px;
   border: 1px solid var(--paper-line);
   background: var(--paper-bg-soft);
   color: var(--paper-text);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -221,28 +223,33 @@ h2 {
   border: 1px solid var(--paper-line);
   background: var(--paper-bg-soft);
   color: var(--paper-text);
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-weight: 700;
+  font-size: 12px;
 }
 
 .grid-scroll {
-  overflow: auto;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
 }
 
 .pixel-grid {
   display: grid;
   gap: 1px;
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: min(100%, max-content);
   background: linear-gradient(180deg, rgba(214, 195, 166, 0.55), rgba(191, 163, 126, 0.55));
   padding: 8px;
   border-radius: 12px;
   box-shadow: inset 0 0 0 1px rgba(126, 98, 67, 0.14);
+  align-self: start;
 }
 
 .pixel {
   width: 100%;
-  min-width: 16px;
+  min-width: 0;
   aspect-ratio: 1;
   border: 1px solid rgba(126, 98, 67, 0.16);
   cursor: crosshair;
@@ -260,11 +267,30 @@ h2 {
 }
 
 .pixel-label {
-  font-size: 9px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(8px, 0.55vw, 9px);
   line-height: 1;
   color: rgba(67, 53, 42, 0.82);
   background: rgba(255, 250, 240, 0.72);
   padding: 2px 3px;
   border-radius: 4px;
+}
+
+@media (max-width: 1200px) {
+  .grid-scroll {
+    overflow: auto;
+  }
+
+  .pixel-grid {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .pixel {
+    min-width: 14px;
+  }
 }
 </style>

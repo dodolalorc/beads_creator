@@ -136,10 +136,10 @@ function handleModalConfirm(selectedIds: string[]) {
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: var(--paper-shadow-soft);
   backdrop-filter: blur(6px);
 }
@@ -148,7 +148,7 @@ function handleModalConfirm(selectedIds: string[]) {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -159,7 +159,7 @@ function handleModalConfirm(selectedIds: string[]) {
 
 .panel-title {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--paper-text);
   margin-bottom: 4px;
 }
@@ -167,7 +167,7 @@ function handleModalConfirm(selectedIds: string[]) {
 .note {
   margin: 0;
   color: var(--paper-text-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .expand-hint {
@@ -177,7 +177,7 @@ function handleModalConfirm(selectedIds: string[]) {
 
 .palette-toolbar {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -186,8 +186,8 @@ function handleModalConfirm(selectedIds: string[]) {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-right: 8px;
-  padding: 4px 10px;
+  margin-right: 4px;
+  padding: 4px 8px;
   background: var(--paper-bg-strong);
   border: 1px solid var(--paper-line);
   border-radius: 12px;
@@ -214,16 +214,16 @@ function handleModalConfirm(selectedIds: string[]) {
 /* 紧凑网格 - 显示前30个 */
 .palette-grid-compact {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  gap: 6px;
   max-width: 100%;
 }
 
 /* 完整网格 - 展开后 */
 .palette-grid-full {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  gap: 6px;
   max-width: 100%;
 }
 

@@ -67,10 +67,10 @@ watch(
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 18px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--paper-shadow-soft);
   backdrop-filter: blur(6px);
 }
@@ -86,15 +86,15 @@ watch(
 .form-col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--paper-text);
 }
 
@@ -102,9 +102,9 @@ input[type="number"] {
   background: var(--paper-bg-strong);
   border: 1px solid var(--paper-line);
   border-radius: 12px;
-  padding: 10px;
+  padding: 9px 10px;
   color: var(--paper-text);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 input[type="number"]:focus {
@@ -115,7 +115,7 @@ input[type="number"]:focus {
 
 .button-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -123,9 +123,9 @@ button {
   cursor: pointer;
   border-radius: 12px;
   border: 1px solid transparent;
-  padding: 10px 16px;
+  padding: 9px 14px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 120ms ease;
 }
 

@@ -287,30 +287,30 @@ function downloadPng() {
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 18px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--paper-shadow-soft);
   backdrop-filter: blur(6px);
 }
 
 .panel-title {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--paper-text);
 }
 
 .note {
   margin: 0;
   color: var(--paper-text-muted);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .export-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -318,10 +318,10 @@ button {
   cursor: pointer;
   border-radius: 10px;
   border: 1px solid transparent;
-  padding: 10px 14px;
+  padding: 9px 12px;
   font-weight: 700;
   transition: all 120ms ease;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .primary {

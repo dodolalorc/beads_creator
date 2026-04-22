@@ -370,44 +370,44 @@ textarea {
 
 <style scoped>
 .page {
-  width: min(1440px, 96vw);
+  width: min(1580px, 98vw);
   margin: 0 auto;
-  padding: 32px 20px 48px;
+  padding: 24px 18px 40px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 }
 
 .canvas-workspace {
   width: 100%;
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(248px, 272px) minmax(0, 1fr) minmax(248px, 272px);
+  gap: 16px;
+  align-items: start;
 }
 
 .left-controls,
 .right-controls {
-  width: 320px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   position: sticky;
-  top: 20px;
+  top: 16px;
+  min-width: 0;
 }
 
 .canvas-container {
   min-width: 0;
-  flex: 1;
+  width: 100%;
 }
 
 @media (max-width: 1200px) {
   .canvas-workspace {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .left-controls,
   .right-controls {
-    width: 100%;
     position: static;
   }
 }

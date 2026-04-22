@@ -113,10 +113,10 @@ function handleFileChange(event: Event) {
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 18px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   box-shadow: var(--paper-shadow-soft);
   backdrop-filter: blur(6px);
 }
@@ -133,15 +133,15 @@ function handleFileChange(event: Event) {
 .form-col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--paper-text);
 }
 
@@ -152,9 +152,9 @@ textarea {
   background: var(--paper-bg-strong);
   border: 1px solid var(--paper-line);
   border-radius: 12px;
-  padding: 10px;
+  padding: 9px 10px;
   color: var(--paper-text);
-  font-size: 14px;
+  font-size: 13px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
@@ -174,9 +174,9 @@ textarea:focus {
   cursor: pointer;
   border-radius: 12px;
   border: none;
-  padding: 10px 16px;
+  padding: 9px 14px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 120ms ease;
   display: inline-flex;
   align-items: center;
@@ -200,7 +200,7 @@ textarea:focus {
 }
 
 .btn-icon {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -210,9 +210,9 @@ textarea:focus {
   border: 1px solid var(--paper-line);
   background: var(--paper-bg-strong);
   color: var(--paper-text);
-  padding: 10px 16px;
+  padding: 9px 14px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 120ms ease;
   display: inline-flex;
   align-items: center;

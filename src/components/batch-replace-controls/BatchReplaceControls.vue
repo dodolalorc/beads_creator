@@ -111,10 +111,10 @@ function selectToColor(colorId: string) {
   background: var(--paper-bg);
   border: 1px solid var(--paper-line);
   border-radius: 18px;
-  padding: 18px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--paper-shadow-soft);
   backdrop-filter: blur(6px);
 }
@@ -130,17 +130,18 @@ function selectToColor(colorId: string) {
 .form-col {
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 8px;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--paper-text);
   flex: 1;
+  min-width: 0;
 }
 
 .custom-select {
@@ -152,12 +153,12 @@ label {
   background: var(--paper-bg-strong);
   border: 1px solid var(--paper-line);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 9px 10px;
   color: var(--paper-text);
-  font-size: 14px;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   transition: all 120ms ease;
 }
 
@@ -194,14 +195,14 @@ label {
 }
 
 .dropdown-item {
-  padding: 10px 12px;
+  padding: 9px 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   transition: all 120ms ease;
   color: var(--paper-text);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .dropdown-item:hover {
@@ -258,9 +259,9 @@ button {
   cursor: pointer;
   border-radius: 10px;
   border: 1px solid transparent;
-  padding: 10px 16px;
+  padding: 9px 14px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 120ms ease;
   display: inline-flex;
   align-items: center;
